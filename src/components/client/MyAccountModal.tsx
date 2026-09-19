@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   X, 
@@ -24,6 +24,8 @@ import {
 import { UserProfile, updateUserProfileInDb } from '../../utils/supabaseClient';
 import { Booking, AppSettings } from '../../types';
 import { dispatchAppNotification } from '../../utils/notifications';
+import { CurrencySelector } from '../common/CurrencySelector';
+import { SupportedCurrency, getStoredCurrency, formatCurrency } from '../../utils/currency';
 
 interface MyAccountModalProps {
   isOpen: boolean;
@@ -55,13 +57,57 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
   const [nationality, setNationality] = useState<string>(travelerUser?.nationality || 'Filipino');
   const [dietaryPreferences, setDietaryPreferences] = useState<string>(travelerUser?.dietary_preferences || '');
   const [avatarUrl, setAvatarUrl] = useState<string>(travelerUser?.avatar_url || '');
+  const [isDraggingAvatar, setIsDraggingAvatar] = useState<boolean>(false);
+  const [showUrlInput, setShowUrlInput] = useState<boolean>(false);
   const [isSavingProfile, setIsSavingProfile] = useState<boolean>(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState<string>('');
+
+  const processAvatarFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file (JPEG, PNG, WEBP, GIF, etc.).');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      alert('Image file size exceeds 8MB. Please select a smaller photo.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setAvatarUrl(e.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingAvatar(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processAvatarFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      processAvatarFile(e.target.files[0]);
+    }
+  };
 
   // Theme Customization State
   const [selectedAccent, setSelectedAccent] = useState<string>(appSettings?.theme?.accentColor || 'coral');
   const [selectedTone, setSelectedTone] = useState<string>(appSettings?.theme?.bgTone || 'obsidian');
   const [cardGlow, setCardGlow] = useState<boolean>(appSettings?.theme?.cardGlow ?? true);
+  const [activeCurrency, setActiveCurrency] = useState<SupportedCurrency>(getStoredCurrency());
+
+  useEffect(() => {
+    const handleCurrencyChange = (e: Event) => {
+      const custom = e as CustomEvent<SupportedCurrency>;
+      if (custom.detail) setActiveCurrency(custom.detail);
+    };
+    window.addEventListener('holiday_currency_changed', handleCurrencyChange);
+    return () => window.removeEventListener('holiday_currency_changed', handleCurrencyChange);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -251,7 +297,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                           Outstanding Balance Reminder
                         </span>
                         <h4 className="text-xl font-serif-display text-ivory">
-                          ₱{totalOutstandingBalance.toLocaleString()} Unpaid Remaining
+                          {formatCurrency(totalOutstandingBalance, activeCurrency)} Unpaid Remaining
                         </h4>
                       </div>
                     </div>
@@ -281,7 +327,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                             <span className="text-[11px] text-sand-muted truncate block max-w-[180px]">{b.tourTitle}</span>
                           </div>
                           <div className="text-right">
-                            <span className="text-xs text-rose-300 font-mono font-bold block">₱{(b.invoice?.balanceDue || 0).toLocaleString()}</span>
+                            <span className="text-xs text-rose-300 font-mono font-bold block">{formatCurrency(b.invoice?.balanceDue || 0, activeCurrency)}</span>
                             <span className="text-[10px] text-sand-muted block">{b.travelDate}</span>
                           </div>
                         </div>
@@ -305,13 +351,13 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
 
                 <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
                   <span className="text-[10px] text-sand-muted uppercase font-mono">Total Settled Payment</span>
-                  <p className="text-2xl font-serif-display text-emerald-400">₱{totalPaidAmount.toLocaleString()}</p>
+                  <p className="text-2xl font-serif-display text-emerald-400">{formatCurrency(totalPaidAmount, activeCurrency)}</p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
                   <span className="text-[10px] text-sand-muted uppercase font-mono">Total Remaining Balance</span>
                   <p className={`text-2xl font-serif-display ${totalOutstandingBalance > 0 ? 'text-sunset-coral' : 'text-emerald-400'}`}>
-                    ₱{totalOutstandingBalance.toLocaleString()}
+                    {formatCurrency(totalOutstandingBalance, activeCurrency)}
                   </p>
                 </div>
               </div>
@@ -456,17 +502,94 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                   />
                 </div>
 
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="text-[11px] text-sand-muted block font-mono">
-                    Avatar Image Photo URL
-                  </label>
-                  <input
-                    type="url"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/... or profile image link"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#070B0E] border border-white/15 text-ivory text-xs font-mono focus:outline-none focus:border-sunset-coral"
-                  />
+                <div className="sm:col-span-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] text-sand-muted block font-mono">
+                      Profile Avatar Photo <span className="text-sunset-coral font-bold">(Drag & Drop or Click to Browse)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowUrlInput(!showUrlInput)}
+                      className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+                    >
+                      {showUrlInput ? 'Use Drag & Drop' : 'Paste Direct Image URL'}
+                    </button>
+                  </div>
+
+                  {showUrlInput ? (
+                    <input
+                      type="url"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/... or profile image link"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#070B0E] border border-white/15 text-ivory text-xs font-mono focus:outline-none focus:border-sunset-coral"
+                    />
+                  ) : (
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDraggingAvatar(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        setIsDraggingAvatar(false);
+                      }}
+                      onDrop={handleAvatarDrop}
+                      className={`relative border-2 border-dashed rounded-2xl p-4 sm:p-6 transition-all text-center flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                        isDraggingAvatar
+                          ? 'border-sunset-coral bg-sunset-coral/20 scale-[1.01]'
+                          : avatarUrl
+                          ? 'border-emerald-500/40 bg-emerald-950/20'
+                          : 'border-white/20 bg-[#070B0E] hover:border-sunset-coral/60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4 text-left">
+                        {avatarUrl ? (
+                          <div className="relative group shrink-0">
+                            <img
+                              src={avatarUrl}
+                              alt="Avatar Preview"
+                              className="w-16 h-16 rounded-2xl object-cover border-2 border-sunset-coral shadow-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setAvatarUrl('')}
+                              className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold shadow hover:bg-rose-500 transition-colors cursor-pointer"
+                              title="Remove photo"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/15 flex items-center justify-center text-sunset-coral shrink-0">
+                            <UploadCloud className="w-7 h-7" />
+                          </div>
+                        )}
+
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-ivory">
+                            {avatarUrl ? 'Profile Photo Loaded!' : 'Drag & Drop your new profile photo here'}
+                          </p>
+                          <p className="text-[10px] text-sand-muted font-mono">
+                            Supports JPG, PNG, WEBP, GIF (Up to 8MB)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <label className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-ivory font-mono text-xs border border-white/15 transition-all cursor-pointer inline-flex items-center gap-2">
+                          <UploadCloud className="w-3.5 h-3.5 text-sunset-coral" />
+                          <span>{avatarUrl ? 'Change Photo' : 'Browse Files'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarFileSelect}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -558,6 +681,14 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                     </div>
                   </button>
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-serif-display text-base text-ivory flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-sunset-coral" />
+                  <span>Display Currency</span>
+                </h4>
+                <CurrencySelector variant="full" />
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">

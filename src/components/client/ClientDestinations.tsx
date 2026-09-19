@@ -18,7 +18,7 @@ const DESTINATIONS: DestinationItem[] = [
     coordinates: '11.18° N / 119.38° E',
     italicTagline: 'Cathedrals of stone rising from jade water',
     description: 'Towering karst cliffs cradle hidden lagoons you reach only by kayak at dawn. Secret beaches where the only footsteps are yours.',
-    image: '/images/elnido.jpg',
+    image: 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1200&q=80',
     fallbackImage: 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1200&q=80'
   },
   {
@@ -27,7 +27,7 @@ const DESTINATIONS: DestinationItem[] = [
     coordinates: '9.85° N / 126.05° E',
     italicTagline: 'Pacific swell and coconut canopies',
     description: 'Tear-drop island fringed by untouched mangrove waterways, emerald tidal pools at Magpupungko, and world-class breaks at Cloud 9.',
-    image: '/images/siargao.png',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
     fallbackImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80'
   },
   {

@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { dispatchAppNotification } from '../../utils/notifications';
 import { UserProfile } from '../../utils/supabaseClient';
+import { SupportedCurrency, getStoredCurrency, formatCurrency } from '../../utils/currency';
 
 interface ClientBookingTrackerProps {
   bookings: Booking[];
@@ -66,6 +67,16 @@ export const ClientBookingTracker: React.FC<ClientBookingTrackerProps> = ({
   const [isReuploadModalOpen, setIsReuploadModalOpen] = useState(false);
   const [reuploadImage, setReuploadImage] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
+  const [activeCurrency, setActiveCurrency] = useState<SupportedCurrency>(getStoredCurrency());
+
+  useEffect(() => {
+    const handleCurrencyChange = (e: Event) => {
+      const custom = e as CustomEvent<SupportedCurrency>;
+      if (custom.detail) setActiveCurrency(custom.detail);
+    };
+    window.addEventListener('holiday_currency_changed', handleCurrencyChange);
+    return () => window.removeEventListener('holiday_currency_changed', handleCurrencyChange);
+  }, []);
 
   // Read personal booking references created by this browser/device
   const [myBookingRefs, setMyBookingRefs] = useState<string[]>(() => {
@@ -326,7 +337,7 @@ Phone: 0916 525 3517 | Email: holidaytravelersinc2022@gmail.com`;
                   Active Outstanding Balance Notice
                 </span>
                 <h3 className="text-lg sm:text-xl font-serif-display text-ivory">
-                  ₱{totalOutstandingBalance.toLocaleString()} Remaining Unpaid
+                  {formatCurrency(totalOutstandingBalance, activeCurrency)} Remaining Unpaid
                 </h3>
               </div>
             </div>
@@ -558,7 +569,7 @@ Phone: 0916 525 3517 | Email: holidaytravelersinc2022@gmail.com`;
 
                     <div className="mt-2 flex items-center justify-between">
                       <span className="font-mono font-bold text-xs text-emerald-400">
-                        ₱{b.invoice.amountPaid.toLocaleString()}
+                        {formatCurrency(b.invoice.amountPaid, activeCurrency)}
                       </span>
 
                       {status === 'Verified' ? (

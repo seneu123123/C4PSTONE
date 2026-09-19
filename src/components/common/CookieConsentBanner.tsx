@@ -39,14 +39,13 @@ export const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({
 
   useEffect(() => {
     const stored = getStoredCookiePreferences();
-    if (!stored) {
-      // Delay slightly for smooth page load transition
-      const timer = setTimeout(() => setShowBanner(true), 800);
-      return () => clearTimeout(timer);
-    } else {
+    if (stored) {
       setDraftAnalytics(stored.analytics);
       setDraftMarketing(stored.marketing);
     }
+    // Always trigger bottom-left banner on page load
+    const timer = setTimeout(() => setShowBanner(true), 600);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {

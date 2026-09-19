@@ -22,22 +22,17 @@ export const ClientHero: React.FC<ClientHeroProps> = ({ onExploreClick, onBookCl
       id="hero"
       className="relative min-h-screen flex flex-col justify-between pt-32 pb-12 px-6 sm:px-8 overflow-hidden bg-obsidian-deep"
     >
-      {/* Cinematic Full-Bleed Background with Dark Vignette */}
+      {/* Cinematic Full-Bleed Background with Lightened Overlays */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/images/hero.jpg"
-          onError={(e) => {
-            // Fallback in case local file is missing
-            (e.target as HTMLImageElement).src =
-              'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=2400&q=85';
-          }}
+          src="https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=2400&q=85"
           alt="Palawan archipelago limestone karst lagoons at twilight"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover object-center opacity-40 scale-105"
+          className="w-full h-full object-cover object-center opacity-70 scale-105"
         />
-        {/* Layered Gradient Overlays for Moody Contrast */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#070B0E] via-[#070B0E]/60 to-[#070B0E]/80" />
-        <div className="absolute inset-0 bg-radial-vignette opacity-80" />
+        {/* Balanced Gradient Overlays for High Contrast & Vibrant Imagery */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#070B0E] via-[#070B0E]/40 to-black/30" />
+        <div className="absolute inset-0 bg-radial-vignette opacity-50" />
       </div>
 
       {/* Hero Content (Centered Editorial Alignment) */}

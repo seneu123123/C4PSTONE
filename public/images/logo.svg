@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="110 110 260 220" fill="none">
+  <defs>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5722" />
+      <stop offset="50%" stop-color="#F4511E" />
+      <stop offset="100%" stop-color="#FB8C00" />
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0288D1" />
+      <stop offset="100%" stop-color="#039BE5" />
+    </linearGradient>
+    <linearGradient id="planeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0288D1" />
+      <stop offset="100%" stop-color="#0277BD" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(40, 20)">
+    <!-- Suitcase Handle -->
+    <path d="M 160 170 C 160 135, 260 135, 260 170 L 260 185 L 232 185 L 232 165 C 232 150, 188 150, 188 165 L 188 185 L 160 185 Z" fill="url(#orangeGrad)" />
+
+    <!-- Outer Suitcase Shape with Rounded Corners -->
+    <clipPath id="suitcaseClip">
+      <rect x="120" y="180" width="180" height="130" rx="32" ry="32" />
+    </clipPath>
+
+    <g clip-path="url(#suitcaseClip)">
+      <!-- Top Orange Area -->
+      <rect x="100" y="160" width="220" height="170" fill="url(#orangeGrad)" />
+
+      <!-- White Diagonal Arc Swoosh -->
+      <path d="M 100 290 Q 220 220 320 180 L 320 205 Q 220 245 100 315 Z" fill="#FFFFFF" />
+
+      <!-- Bottom Blue Area -->
+      <path d="M 100 315 Q 220 245 320 205 L 320 330 L 100 330 Z" fill="url(#blueGrad)" />
+    </g>
+
+    <!-- Jet Airplane Soaring Up/Right from the Swoosh -->
+    <g transform="translate(265, 115) rotate(-22)">
+      <!-- Airplane Body -->
+      <path d="M 35 25 C 50 25, 75 35, 85 40 C 75 45, 50 55, 35 55 L 20 55 L 5 78 L -5 78 L 8 55 L -10 55 L -18 68 L -26 68 L -20 40 L -26 12 L -18 12 L -10 25 L 8 25 L -5 2 L 5 2 L 20 25 Z" fill="url(#planeGrad)" />
+    </g>
+  </g>
+</svg>

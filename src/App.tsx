@@ -323,19 +323,15 @@ export default function App() {
     localStorage.setItem('holiday_travelers_settings_v2', JSON.stringify(appSettings));
   }, [appSettings]);
 
-  // Auto-launch promotional advertisement popup for guests if enabled
+  // Auto-launch promotional advertisement popup for guests
   useEffect(() => {
-    if (viewMode === 'customer' && appSettings.promo?.enabled) {
-      const dismissedDate = localStorage.getItem('holiday_promo_dismissed_date');
-      const today = new Date().toDateString();
-      if (dismissedDate !== today) {
-        const timer = setTimeout(() => {
-          setIsPromoModalOpen(true);
-        }, 1200);
-        return () => clearTimeout(timer);
-      }
+    if (viewMode === 'customer') {
+      const timer = setTimeout(() => {
+        setIsPromoModalOpen(true);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [viewMode, appSettings.promo?.enabled]);
+  }, [viewMode]);
 
   useEffect(() => {
     if (viewMode === 'operator') {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Compass, Menu, X, Search, CloudSun, Lock, Ticket, User, LogOut, ChevronDown, Sparkles } from 'lucide-react';
+import { Menu, X, Search, CloudSun, Lock, Ticket, User, LogOut, ChevronDown, Sparkles } from 'lucide-react';
 import { RealTimeNotificationCenter } from '../common/RealTimeNotificationCenter';
+import { CurrencySelector } from '../common/CurrencySelector';
 import { UserProfile } from '../../utils/supabaseClient';
 
 interface ClientNavbarProps {
@@ -98,7 +99,7 @@ export const ClientNavbar: React.FC<ClientNavbarProps> = ({
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between">
-        {/* Brand Logo with Compass Icon & Secret Discreet Multi-click Staff Ingress */}
+        {/* Brand Logo with Custom Suitcase Airplane Logo & Secret Discreet Multi-click Staff Ingress */}
         <a
           href="#hero"
           onClick={(e) => {
@@ -109,14 +110,18 @@ export const ClientNavbar: React.FC<ClientNavbarProps> = ({
           id="brand-logo-link"
           title="Holiday Travelers Travel and Tours Inc."
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sunset-coral/20 to-sunset-coral/10 border border-sunset-coral/60 flex items-center justify-center text-sunset-coral group-hover:scale-105 group-hover:border-sunset-coral transition-all duration-300 shadow-md shadow-sunset-coral/10">
-            <Compass className="w-5 h-5 group-hover:rotate-45 transition-transform duration-500" />
+          <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-sunset-coral/15 to-sunset-coral/5 border border-white/15 flex items-center justify-center p-1.5 group-hover:scale-105 group-hover:border-sunset-coral/60 transition-all duration-300 shadow-xl shadow-black/40">
+            <img
+              src="/images/logo.svg"
+              alt="Holiday Travelers Inc. Logo"
+              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300 drop-shadow-lg"
+            />
           </div>
           <div className="flex flex-col">
-            <span className="font-serif-display text-xl sm:text-2xl text-ivory tracking-wide font-normal leading-tight">
+            <span className="font-serif-display text-2xl sm:text-3xl text-ivory tracking-wide font-medium leading-tight drop-shadow-md">
               Holiday Travelers
             </span>
-            <span className="text-[10px] font-sans-body tracking-[0.2em] uppercase text-sand-muted font-light">
+            <span className="text-[11px] sm:text-xs font-sans-body tracking-[0.22em] uppercase text-sand-muted font-normal">
               Travel & Tours Inc.
             </span>
           </div>
@@ -124,13 +129,6 @@ export const ClientNavbar: React.FC<ClientNavbarProps> = ({
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-          <button
-            onClick={() => scrollToSection('specialties')}
-            className="text-sm font-sans-body text-sand-muted hover:text-ivory transition-colors tracking-wide"
-            id="nav-services-btn"
-          >
-            Services
-          </button>
           <a
             href="https://www.facebook.com/share/p/1DrMyBougo/"
             target="_blank"
@@ -186,6 +184,9 @@ export const ClientNavbar: React.FC<ClientNavbarProps> = ({
 
         {/* Action CTAs */}
         <div className="hidden md:flex items-center gap-3">
+          {/* Multi-Currency Selector Dropdown */}
+          <CurrencySelector variant="pill" />
+
           {/* Real-time notification center */}
           <RealTimeNotificationCenter onOpenTracker={onOpenTracker} />
 
@@ -315,12 +316,6 @@ export const ClientNavbar: React.FC<ClientNavbarProps> = ({
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden glass-obsidian border-b border-white/10 px-6 py-6 mt-3 space-y-4">
-          <button
-            onClick={() => scrollToSection('specialties')}
-            className="block w-full text-left py-2 text-ivory text-base font-serif-display"
-          >
-            Agency Services
-          </button>
           <a
             href="https://www.facebook.com/share/p/1DrMyBougo/"
             target="_blank"

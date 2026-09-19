@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TourPackage } from '../../types';
 import { 
   Clock, 
@@ -18,6 +18,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { SupportedCurrency, getStoredCurrency, formatCurrency } from '../../utils/currency';
 
 interface ClientExpeditionsProps {
   packages: TourPackage[];
@@ -30,6 +31,16 @@ export const ClientExpeditions: React.FC<ClientExpeditionsProps> = ({
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [modalPackage, setModalPackage] = useState<TourPackage | null>(null);
+  const [activeCurrency, setActiveCurrency] = useState<SupportedCurrency>(getStoredCurrency());
+
+  useEffect(() => {
+    const handleCurrencyChange = (e: Event) => {
+      const custom = e as CustomEvent<SupportedCurrency>;
+      if (custom.detail) setActiveCurrency(custom.detail);
+    };
+    window.addEventListener('holiday_currency_changed', handleCurrencyChange);
+    return () => window.removeEventListener('holiday_currency_changed', handleCurrencyChange);
+  }, []);
 
   const activePackages = packages.filter((p) => p.status === 'Active');
 
@@ -258,7 +269,7 @@ export const ClientExpeditions: React.FC<ClientExpeditionsProps> = ({
                         </div>
                         <div className="flex items-baseline gap-1.5">
                           <span className="font-serif-display text-2xl sm:text-3xl font-semibold text-ivory tracking-tight">
-                            ₱{Number(price).toLocaleString()}
+                            {formatCurrency(Number(price), activeCurrency)}
                           </span>
                           <span className="text-xs font-sans-body text-sand-muted font-normal">
                             / pax
@@ -519,7 +530,7 @@ export const ClientExpeditions: React.FC<ClientExpeditionsProps> = ({
                   </span>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-serif-display text-3xl sm:text-4xl text-ivory font-normal">
-                      ₱{(modalPackage.pricePerPax ?? (modalPackage as any).price_per_pax ?? 0).toLocaleString()}
+                      {formatCurrency(Number(modalPackage.pricePerPax ?? (modalPackage as any).price_per_pax ?? 0), activeCurrency)}
                     </span>
                     <span className="text-xs text-sand-muted">/ person</span>
                   </div>
