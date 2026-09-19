@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+:root {
+  --admin-accent: #F26A4F;
+  --admin-accent-hover: #ff765b;
+  --admin-accent-rgb: 242, 106, 79;
+  --admin-font-display: 'Cormorant Garamond', Georgia, serif;
+  --admin-font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --admin-bg-base: #070B0E;
+  --admin-bg-card: #0B1014;
+  --admin-bg-subtle: #0E151A;
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-font-scale: 1;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    background-color: #070B0E;
+    color: #F4F1EA;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    letter-spacing: -0.01em;
+  }
+
+  /* Editorial typography classes */
+  .font-serif-display {
+    font-family: var(--admin-font-display, 'Cormorant Garamond', Georgia, serif);
+  }
+  
+  .font-sans-body {
+    font-family: var(--admin-font-body, 'Plus Jakarta Sans', system-ui, sans-serif);
+  }
+
+  /* Custom sleek oceanic scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--admin-bg-base, #070B0E);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1B242C;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--admin-accent, #F26A4F);
+  }
+}
+
+/* Dynamic Admin Theming Utility Classes */
+.admin-theme-wrapper {
+  background-color: var(--admin-bg-base, #070B0E);
+  font-size: calc(1rem * var(--admin-font-scale, 1));
+}
+
+.admin-theme-card {
+  background-color: var(--admin-bg-card, #0B1014);
+  border-color: var(--admin-border, rgba(255, 255, 255, 0.08));
+}
+
+.admin-theme-accent-text {
+  color: var(--admin-accent, #F26A4F);
+}
+
+.admin-theme-accent-bg {
+  background-color: var(--admin-accent, #F26A4F);
+}
+
+.admin-theme-accent-border {
+  border-color: var(--admin-accent, #F26A4F);
+}
+
+.admin-theme-accent-glow {
+  box-shadow: 0 10px 25px -5px rgba(var(--admin-accent-rgb, 242, 106, 79), 0.25);
+}
+
+/* Emergent Editorial Atmosphere Styling */
+.bg-obsidian-deep {
+  background-color: #070B0E;
+}
+
+.bg-obsidian-card {
+  background-color: #0D1318;
+}
+
+.border-obsidian-subtle {
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.text-sunset-coral {
+  color: #F26A4F;
+}
+
+.bg-sunset-coral {
+  background-color: #F26A4F;
+}
+
+.border-sunset-coral {
+  border-color: #F26A4F;
+}
+
+.text-ivory {
+  color: #F4F1EA;
+}
+
+.text-sand-muted {
+  color: #8E98A0;
+}
+
+/* Glassmorphism & Atmospheric Depth */
+.glass-obsidian {
+  background: rgba(13, 19, 24, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-obsidian-nav {
+  background: rgba(7, 11, 14, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Subtle image zoom on hover */
+.img-editorial-card {
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.img-editorial-card:hover {
+  transform: scale(1.04);
+}
+
+/* Soft text shadow for readability over dark landscapes */
+.hero-text-shadow {
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.65);
+}
+
+/* Tactile Commercial Button Reactivity & Universal Animations */
+@keyframes buttonShimmer {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(200%) rotate(45deg); }
+}
+
+.btn-shimmer-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer-wrap::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.12) 40%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%) rotate(35deg);
+  pointer-events: none;
+}
+
+.btn-shimmer-wrap:hover::after {
+  animation: buttonShimmer 1.2s ease-in-out forwards;
+}
+
+/* Rubber Stamp Physical Drop Animation */
+@keyframes stampDrop {
+  0% {
+    opacity: 0;
+    transform: scale(2.4) rotate(0deg);
+  }
+  60% {
+    opacity: 0.9;
+    transform: scale(0.92) rotate(calc(var(--stamp-rotation, -10deg) * 1.1));
+  }
+  80% {
+    transform: scale(1.05) rotate(calc(var(--stamp-rotation, -10deg) * 0.95));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--stamp-rotation, -10deg));
+  }
+}
+
+.animate-stamp-drop {
+  animation: stampDrop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Universal Button Pop on Press */
+.btn-pop {
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.btn-pop:hover {
+  transform: translateY(-1.5px);
+}
+.btn-pop:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+/* Commercial Glow Ping */
+@keyframes softPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-soft-pulse {
+  animation: softPulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+

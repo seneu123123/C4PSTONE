@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" fill="none">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="60%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#bae6fd" />
+    </linearGradient>
+    <linearGradient id="seaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#0891b2" />
+      <stop offset="100%" stop-color="#0e7490" />
+    </linearGradient>
+    <linearGradient id="cliffGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1200" height="400" fill="url(#skyGrad)" />
+  
+  <!-- Sun -->
+  <circle cx="950" cy="180" r="80" fill="#fef08a" opacity="0.9" />
+  <circle cx="950" cy="180" r="110" fill="#fef08a" opacity="0.3" />
+
+  <!-- Sea -->
+  <rect y="380" width="1200" height="295" fill="url(#seaGrad)" />
+
+  <!-- Limestone Cliffs -->
+  <path d="M-50 400 L120 150 L280 260 L450 120 L600 380 Z" fill="url(#cliffGrad)" />
+  <path d="M750 400 L900 180 L1050 280 L1250 160 L1250 400 Z" fill="url(#cliffGrad)" />
+
+  <!-- Turquoise Lagoon Highlight -->
+  <ellipse cx="500" cy="520" rx="350" ry="80" fill="#22d3ee" opacity="0.4" />
+
+  <!-- Outrigger Boat -->
+  <path d="M520 480 L640 480 L610 500 L550 500 Z" fill="#ffffff" />
+  <rect x="575" y="460" width="10" height="20" fill="#38bdf8" />
+  
+  <!-- Overlay Title Card -->
+  <rect x="60" y="520" width="520" height="110" rx="16" fill="#090d16" opacity="0.85" />
+  <text x="90" y="560" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="1">EL NIDO & CORON PARADISE</text>
+  <text x="90" y="595" fill="#ffffff" font-family="system-ui, sans-serif" font-size="24" font-weight="800">Palawan Island Hopping Tour</text>
+</svg>

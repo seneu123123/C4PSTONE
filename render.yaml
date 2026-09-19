@@ -1,0 +1,45 @@
+services:
+  # Laravel Web Service
+  - type: web
+    name: holidaytravelers-laravel-api
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: holidaytravelers-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: holidaytravelers-postgres
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: holidaytravelers-postgres
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: holidaytravelers-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: holidaytravelers-postgres
+          property: password
+
+  # Managed PostgreSQL Database on Render
+  - type: postgres
+    name: holidaytravelers-postgres
+    plan: free
+    region: singapore
+    databaseName: holidaytravelers_capstone
+    user: holidaytravelers_user

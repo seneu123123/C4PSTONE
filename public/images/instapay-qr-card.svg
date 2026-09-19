@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 550" width="460" height="550">
+  <defs>
+    <filter id="cardGlow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#001a4d" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Blue Background Outer Sheet -->
+  <rect width="460" height="550" rx="32" fill="#0066FF" />
+
+  <!-- White Interior Card -->
+  <rect x="32" y="20" width="396" height="510" rx="24" fill="#FFFFFF" filter="url(#cardGlow)" />
+
+  <!-- QR Code Scaled to 245px and perfectly centered -->
+  <g transform="translate(107.5, 45) scale(4.8)">
+    <path fill="#ffffff" d="M0 0h51v51H0z"/><path stroke="#000000" d="M1 1.5h7m2 0h1m1 0h1m5 0h2m1 0h1m1 0h1m1 0h1m1 0h1m1 0h2m1 0h2m2 0h3m2 0h1m1 0h7M1 2.5h1m5 0h1m1 0h1m3 0h2m4 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m4 0h4m1 0h1m5 0h1M1 3.5h1m1 0h3m1 0h1m3 0h2m1 0h6m2 0h1m2 0h1m1 0h3m1 0h1m1 0h3m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1M1 4.5h1m1 0h3m1 0h1m2 0h1m1 0h1m2 0h1m5 0h1m1 0h2m3 0h1m1 0h2m1 0h4m3 0h1m2 0h1m1 0h3m1 0h1M1 5.5h1m1 0h3m1 0h1m2 0h2m2 0h1m1 0h4m2 0h7m3 0h1m3 0h1m1 0h1m4 0h1m1 0h3m1 0h1M1 6.5h1m5 0h1m1 0h2m1 0h1m1 0h1m1 0h1m1 0h1m4 0h1m3 0h1m1 0h1m2 0h1m2 0h5m3 0h1m5 0h1M1 7.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M9 8.5h1m3 0h3m2 0h2m2 0h2m3 0h3m3 0h3m4 0h2M5 9.5h4m1 0h1m1 0h2m2 0h1m1 0h1m2 0h7m3 0h3m1 0h1m1 0h1m1 0h3m1 0h2m3 0h1M5 10.5h1m7 0h5m2 0h3m1 0h3m4 0h4m1 0h3m2 0h1m2 0h1m1 0h2m1 0h1M1 11.5h2m1 0h1m2 0h1m1 0h1m1 0h1m1 0h3m5 0h2m1 0h3m1 0h1m1 0h2m1 0h4m1 0h4m3 0h4M1 12.5h2m3 0h1m1 0h2m1 0h1m2 0h1m2 0h1m1 0h3m1 0h2m3 0h1m2 0h1m2 0h2m3 0h4m1 0h1m3 0h1M1 13.5h2m1 0h1m2 0h2m4 0h5m2 0h2m1 0h1m2 0h1m1 0h1m2 0h2m2 0h2m1 0h3m1 0h1m1 0h2m1 0h2M1 14.5h1m1 0h1m5 0h5m1 0h1m1 0h3m2 0h2m2 0h1m3 0h2m2 0h2m2 0h4m2 0h1m2 0h2M1 15.5h4m1 0h4m2 0h1m5 0h1m2 0h1m2 0h4m1 0h1m1 0h5m2 0h1m2 0h2m2 0h4M9 16.5h2m6 0h6m4 0h1m4 0h1m5 0h4m2 0h2M1 17.5h1m1 0h6m1 0h1m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2m2 0h5m1 0h4m4 0h5m1 0h1M2 18.5h3m1 0h1m1 0h3m4 0h1m3 0h5m5 0h2m3 0h4m4 0h1m1 0h1m3 0h1M2 19.5h6m2 0h3m1 0h3m3 0h1m1 0h2m3 0h2m2 0h1m1 0h3m1 0h1m2 0h4m1 0h5M1 20.5h1m4 0h1m4 0h4m1 0h1m2 0h2m5 0h2m4 0h3m1 0h1m3 0h4m2 0h3M1 21.5h1m5 0h1m1 0h1m1 0h7m1 0h2m2 0h2m3 0h1m1 0h2m9 0h1m2 0h2m2 0h2M1 22.5h1m2 0h1m3 0h1m1 0h1m6 0h1m3 0h1m1 0h3m2 0h2m1 0h3m3 0h3m3 0h4m2 0h1M2 23.5h1m2 0h5m2 0h4m1 0h1m3 0h1m1 0h5m2 0h2m1 0h1m2 0h2m1 0h1m1 0h5m2 0h1M1 24.5h2m1 0h2m3 0h1m3 0h1m2 0h1m1 0h1m1 0h4m3 0h1m3 0h2m1 0h1m2 0h3m1 0h1m3 0h3M1 25.5h3m1 0h1m1 0h1m1 0h2m2 0h4m4 0h1m1 0h1m1 0h1m1 0h1m4 0h2m4 0h2m1 0h1m1 0h1m1 0h5M1 26.5h1m3 0h1m3 0h1m2 0h1m3 0h1m1 0h1m1 0h1m1 0h2m3 0h5m1 0h1m3 0h2m1 0h2m3 0h3M5 27.5h12m2 0h1m1 0h1m1 0h5m6 0h1m1 0h3m2 0h7m1 0h1M1 28.5h1m1 0h3m2 0h2m2 0h4m4 0h1m1 0h1m2 0h1m1 0h1m3 0h2m1 0h1m1 0h1m2 0h1m3 0h2m3 0h2M3 29.5h1m1 0h3m4 0h1m1 0h1m1 0h1m2 0h2m1 0h2m1 0h2m4 0h1m2 0h1m2 0h4m2 0h2m4 0h1M3 30.5h1m1 0h1m2 0h1m4 0h1m1 0h2m1 0h2m2 0h1m2 0h1m1 0h1m1 0h1m1 0h2m1 0h1m4 0h2m2 0h3m1 0h3M1 31.5h5m1 0h1m1 0h2m2 0h1m1 0h1m1 0h4m1 0h3m2 0h1m2 0h1m1 0h1m1 0h1m1 0h1m4 0h3m2 0h4M1 32.5h1m6 0h1m1 0h4m1 0h3m1 0h1m2 0h1m1 0h4m1 0h3m4 0h1m3 0h2m1 0h1m5 0h1M1 33.5h1m1 0h3m1 0h1m3 0h5m2 0h1m1 0h2m1 0h3m1 0h1m1 0h3m2 0h1m1 0h1m3 0h6m3 0h1M4 34.5h1m3 0h1m2 0h1m5 0h1m2 0h1m1 0h2m2 0h3m3 0h1m5 0h3m2 0h1m1 0h1m1 0h1M2 35.5h2m3 0h1m2 0h1m1 0h2m1 0h2m1 0h1m3 0h1m1 0h1m1 0h1m1 0h6m1 0h1m1 0h1m1 0h2m2 0h1m1 0h3M4 36.5h1m3 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h8m1 0h2m4 0h2m3 0h2m1 0h1m1 0h1m1 0h2M1 37.5h9m1 0h1m1 0h2m2 0h1m2 0h4m1 0h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h1m4 0h1m1 0h1m2 0h1M1 38.5h3m1 0h1m6 0h4m2 0h1m2 0h2m2 0h1m3 0h6m7 0h1m1 0h2m3 0h1M2 39.5h1m3 0h4m1 0h2m1 0h1m1 0h2m1 0h1m1 0h3m2 0h1m2 0h3m2 0h3m5 0h5m1 0h1M2 40.5h3m3 0h1m1 0h2m2 0h1m3 0h2m1 0h2m1 0h1m3 0h1m3 0h5m3 0h1m2 0h1m1 0h5M1 41.5h3m3 0h4m1 0h1m2 0h1m1 0h1m2 0h8m4 0h3m4 0h7m1 0h3M9 42.5h1m3 0h1m1 0h2m1 0h2m2 0h2m3 0h1m1 0h3m6 0h2m1 0h1m3 0h1m2 0h1M1 43.5h7m1 0h1m1 0h1m1 0h5m2 0h2m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h2m1 0h1m1 0h1m2 0h1M1 44.5h1m5 0h1m1 0h4m2 0h1m1 0h1m4 0h2m3 0h3m1 0h1m3 0h1m5 0h1m3 0h3m1 0h1M1 45.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m3 0h1m1 0h1m2 0h7m1 0h4m2 0h1m1 0h2m1 0h5m1 0h3M1 46.5h1m1 0h3m1 0h1m2 0h3m2 0h10m1 0h1m3 0h1m1 0h2m2 0h1m1 0h1m4 0h1m3 0h1m1 0h1M1 47.5h1m1 0h3m1 0h1m2 0h3m1 0h1m2 0h1m1 0h1m3 0h1m1 0h3m2 0h2m1 0h1m1 0h3m2 0h1m3 0h2m1 0h2M1 48.5h1m5 0h1m3 0h1m1 0h2m1 0h2m4 0h1m1 0h4m2 0h2m2 0h1m2 0h2m1 0h2m2 0h1m1 0h1M1 49.5h7m4 0h1m2 0h1m2 0h1m1 0h1m5 0h2m1 0h2m1 0h2m3 0h1m2 0h2m2 0h4m1 0h1"/>
+
+  </g>
+
+  <!-- Center InstaPay Badge Overlay on QR -->
+  <rect x="206" y="143.5" width="48" height="48" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+  <g transform="translate(210, 149)">
+    <text x="20" y="15" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#002B7F" text-anchor="middle">insta</text>
+    <!-- Stripes -->
+    <rect x="8" y="18.5" width="12" height="2.2" fill="#E31837" rx="1" />
+    <rect x="8" y="21.8" width="8" height="2" fill="#002B7F" rx="1" />
+    <text x="26" y="28.5" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" fill="#E31837" text-anchor="middle">Pay</text>
+  </g>
+
+  <!-- Text and Account Details Below QR matching user's photo -->
+  <text x="230" y="345" font-family="system-ui, -apple-system, sans-serif" font-size="13.5" font-weight="500" fill="#64748B" text-anchor="middle">
+    Transfer fees may apply.
+  </text>
+
+  <text x="230" y="396" font-family="system-ui, -apple-system, sans-serif" font-size="23" font-weight="800" fill="#0057E7" letter-spacing="0.8" text-anchor="middle">
+    KA**L GE****S J.
+  </text>
+
+  <text x="230" y="432" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#64748B" text-anchor="middle">
+    Mobile No.: +63 992 025 ••••
+  </text>
+
+  <text x="230" y="464" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#64748B" text-anchor="middle">
+    User ID: ••••••••••82OHXO
+  </text>
+</svg>

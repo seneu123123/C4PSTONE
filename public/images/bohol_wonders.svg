@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" fill="none">
+  <defs>
+    <linearGradient id="boholSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="70%" stop-color="#7dd3fc" />
+      <stop offset="100%" stop-color="#fef08a" />
+    </linearGradient>
+    <linearGradient id="hillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#854d0e" />
+      <stop offset="100%" stop-color="#15803d" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1200" height="420" fill="url(#boholSky)" />
+
+  <!-- Sun -->
+  <circle cx="200" cy="140" r="70" fill="#fde047" opacity="0.8" />
+
+  <!-- Chocolate Hills -->
+  <path d="M50 480 Q 200 200 350 480 Z" fill="url(#hillGrad)" />
+  <path d="M280 480 Q 450 180 620 480 Z" fill="url(#hillGrad)" />
+  <path d="M550 480 Q 720 220 890 480 Z" fill="url(#hillGrad)" />
+  <path d="M820 480 Q 980 240 1140 480 Z" fill="url(#hillGrad)" />
+
+  <!-- Ground -->
+  <rect y="460" width="1200" height="215" fill="#14532d" />
+
+  <!-- Palm Trees Silhouette -->
+  <path d="M150 460 Q 140 380 120 320" stroke="#052e16" stroke-width="12" stroke-linecap="round" />
+  <circle cx="120" cy="310" r="35" fill="#15803d" opacity="0.9" />
+
+  <!-- Overlay Title Card -->
+  <rect x="60" y="520" width="520" height="110" rx="16" fill="#090d16" opacity="0.85" />
+  <text x="90" y="560" fill="#facc15" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="1">CHOCOLATE HILLS & PANGLAO</text>
+  <text x="90" y="595" fill="#ffffff" font-family="system-ui, sans-serif" font-size="24" font-weight="800">Bohol Heritage & Wonders Tour</text>
+</svg>

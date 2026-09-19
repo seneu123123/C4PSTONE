@@ -1,0 +1,8 @@
+{
+  "name": "Holiday Travelers Travel and Tours Inc",
+  "description": "Capstone Tour Operations \u0026 Customer Booking System for Holiday Travelers Travel and Tours Inc.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

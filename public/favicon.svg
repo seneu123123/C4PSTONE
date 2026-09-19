@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B4A"/>
+      <stop offset="100%" stop-color="#E04824"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#070B0E"/>
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="none" stroke="#FF6B4A" stroke-opacity="0.3" stroke-width="1"/>
+  <!-- Compass Rose -->
+  <g transform="translate(16, 16)">
+    <!-- Outer ring -->
+    <circle r="10" fill="none" stroke="#FF6B4A" stroke-width="1.2" stroke-dasharray="1 2"/>
+    <!-- North Pointer -->
+    <polygon points="0,-11 3.2,-2 0,0 -3.2,-2" fill="url(#navGrad)"/>
+    <!-- South Pointer -->
+    <polygon points="0,11 3.2,2 0,0 -3.2,2" fill="#E2E8F0" fill-opacity="0.5"/>
+    <!-- East Pointer -->
+    <polygon points="11,0 2,3.2 0,0 2,-3.2" fill="#E2E8F0" fill-opacity="0.7"/>
+    <!-- West Pointer -->
+    <polygon points="-11,0 -2,3.2 0,0 -2,-3.2" fill="#E2E8F0" fill-opacity="0.7"/>
+    <!-- Center Jewel -->
+    <circle r="2.2" fill="#070B0E" stroke="#FF6B4A" stroke-width="1.5"/>
+  </g>
+</svg>
