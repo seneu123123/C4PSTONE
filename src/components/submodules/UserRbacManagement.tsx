@@ -74,11 +74,14 @@ const ALL_ROLES: StaffRole[] = [
 
 const ALL_TABS: SubmoduleTab[] = [
   'overview',
+  'guide_command',
   'packages',
   'bookings',
   'itineraries',
   'reservations',
+  'payment_gate',
   'payments',
+  'reconciliation',
   'feedback',
   'settings',
   'rbac'

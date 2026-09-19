@@ -63,7 +63,7 @@ Phone: 0916 525 3517 | Email: holidaytravelersinc2022@gmail.com`;
 
   return (
     <div 
-      className="fixed inset-0 z-[90] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200 cursor-pointer"
+      className="fixed inset-0 z-[90] bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200 cursor-pointer"
       onClick={onClose}
       role="dialog"
       aria-modal="true"

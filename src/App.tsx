@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Booking, 
   CustomerFeedback, 
@@ -26,7 +26,9 @@ import { ClientNavbar } from './components/client/ClientNavbar';
 import { ClientPortal } from './components/client/ClientPortal';
 import { ClientFooter } from './components/client/ClientFooter';
 import { TravelerAuthModal } from './components/client/TravelerAuthModal';
-import { UserProfile, signOutUser } from './utils/supabaseClient';
+import { MyAccountModal } from './components/client/MyAccountModal';
+import { UserProfile, signOutUser, getSupabase, syncUserProfile, getCurrentUserProfile } from './utils/supabaseClient';
+import { applyBookingsRLS } from './utils/rowLevelSecurity';
 import { AdminNavbar } from './components/admin/AdminNavbar';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
@@ -116,6 +118,7 @@ export default function App() {
   const [isCookiePreferencesOpen, setIsCookiePreferencesOpen] = useState<boolean>(false);
   const [isPromoModalOpen, setIsPromoModalOpen] = useState<boolean>(false);
   const [activePromoCode, setActivePromoCode] = useState<string | undefined>(undefined);
+  const [isMyAccountModalOpen, setIsMyAccountModalOpen] = useState<boolean>(false);
 
   // Traveler Supabase Auth State
   const [travelerUser, setTravelerUser] = useState<UserProfile | null>(() => {
@@ -130,14 +133,69 @@ export default function App() {
 
   const handleTravelerAuthSuccess = (profile: UserProfile) => {
     setTravelerUser(profile);
+    localStorage.setItem('holiday_traveler_profile', JSON.stringify(profile));
     setIsTravelerAuthModalOpen(false);
+    // Re-open booking modal when user completes sign in
+    setIsBookingModalOpen(true);
     setTravelerAuthReason(undefined);
+  };
+
+  const handleOpenBookingModalWithAuth = (pkg?: TourPackage) => {
+    if (pkg) setPreSelectedPackage(pkg);
+    if (!travelerUser) {
+      setTravelerAuthReason('Please sign in or create an account to access the reservation & passenger manifest checkout.');
+      setIsBookingModalOpen(false);
+      setIsTravelerAuthModalOpen(true);
+      return;
+    }
+    setIsBookingModalOpen(true);
   };
 
   const handleSignOutTraveler = async () => {
     await signOutUser();
     setTravelerUser(null);
+    localStorage.removeItem('holiday_traveler_profile');
+    localStorage.removeItem('holiday_my_booking_refs');
+    setTargetTrackerRef(undefined);
+    setIsTrackerOpen(false);
   };
+
+  // Synchronize Supabase Auth state (Google OAuth redirect, Session restore, etc.)
+  useEffect(() => {
+    let isMounted = true;
+
+    // Check active session / profile immediately on load
+    getCurrentUserProfile().then((profile) => {
+      if (isMounted && profile) {
+        setTravelerUser(profile);
+      }
+    });
+
+    // Subscribe to auth state changes (e.g. returning from Google OAuth popup/redirect)
+    const supabase = getSupabase();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
+      if (session?.user) {
+        const profile = await syncUserProfile(session.user);
+        if (profile) {
+          setTravelerUser(profile);
+        }
+        // Clean up hash fragment or query params from URL after Google OAuth callback
+        if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState(null, '', cleanUrl);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setTravelerUser(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
+    };
+  }, []);
 
   const handleOpenLegalPolicy = (tab: LegalPolicyTab) => {
     setLegalModalTab(tab);
@@ -450,7 +508,31 @@ export default function App() {
   const handleLogout = () => {
     setAdminSession(null);
     setViewMode('customer');
+    setTravelerUser(null);
+    localStorage.removeItem('holiday_admin_session');
+    localStorage.removeItem('holiday_traveler_profile');
+    localStorage.removeItem('holiday_my_booking_refs');
+    setTargetTrackerRef(undefined);
+    setIsTrackerOpen(false);
   };
+
+  // Row Level Security (RLS) Customer Isolation Filter:
+  // - Staff members: see authorized bookings per staff role RLS
+  // - Authenticated travelers: see ONLY bookings linked to their account email
+  // - Logged-out / Guest users: see 0 tickets by default (eliminating ticket visibility leakage on logout)
+  const customerVisibleBookings = useMemo(() => {
+    if (adminSession) {
+      return applyBookingsRLS(bookings, { email: adminSession.email, role: adminSession.role }).data;
+    }
+    if (travelerUser) {
+      const userEmail = travelerUser.email.toLowerCase().trim();
+      return bookings.filter((b) => (b.customer?.email || '').toLowerCase().trim() === userEmail);
+    }
+    if (targetTrackerRef) {
+      return bookings.filter((b) => b.bookingRef === targetTrackerRef);
+    }
+    return [];
+  }, [bookings, adminSession, travelerUser, targetTrackerRef]);
 
   const pendingPaymentsCount = bookings.filter((b) => b.invoice.balanceDue > 0).length;
 
@@ -471,11 +553,8 @@ export default function App() {
         <>
           <ClientNavbar
             onOpenBooking={(pkgId) => {
-              if (pkgId) {
-                const found = packages.find((p) => p.id === pkgId);
-                if (found) setPreSelectedPackage(found);
-              }
-              setIsBookingModalOpen(true);
+              const found = pkgId ? packages.find((p) => p.id === pkgId) : undefined;
+              handleOpenBookingModalWithAuth(found);
             }}
             onOpenTracker={handleOpenTracker}
             onOpenAdminAuth={() => setIsLoginModalOpen(true)}
@@ -488,12 +567,13 @@ export default function App() {
               setIsTravelerAuthModalOpen(true);
             }}
             onSignOutTraveler={handleSignOutTraveler}
+            onOpenMyAccount={() => setIsMyAccountModalOpen(true)}
           />
 
           <main className="flex-1 w-full" id="main-content">
             <ClientPortal
               packages={packages}
-              bookings={bookings}
+              bookings={customerVisibleBookings}
               feedbacks={feedbacks}
               onCreateBooking={handleCreateBooking}
               onUpdateBooking={handleUpdateBooking}
@@ -510,17 +590,16 @@ export default function App() {
               trackerTargetRef={targetTrackerRef}
               isBookingModalOpen={isBookingModalOpen}
               onCloseBookingModal={() => setIsBookingModalOpen(false)}
-              onOpenBookingModal={(pkg) => {
-                if (pkg) setPreSelectedPackage(pkg);
-                setIsBookingModalOpen(true);
-              }}
+              onOpenBookingModal={(pkg) => handleOpenBookingModalWithAuth(pkg)}
               onOpenWeatherRadar={() => setIsWeatherRadarOpen(true)}
               onOpenLegalPolicy={handleOpenLegalPolicy}
-              promoCode={activePromoCode || (appSettings.promo?.enabled ? appSettings.promo.code : undefined)}
+              promoCode={activePromoCode || (appSettings.promo?.enabled ? appSettings.promo.discountCode : undefined)}
               promoDiscountPct={appSettings.promo?.discountPct || 8}
               currentUser={travelerUser}
+              onOpenMyAccount={() => setIsMyAccountModalOpen(true)}
               onRequireAuth={() => {
                 setTravelerAuthReason('Philippine DOT and IATA airline regulations require a verified email or Google profile to confirm booking vouchers and transmit flight manifests. Please sign in or register to complete your reservation.');
+                setIsBookingModalOpen(false);
                 setIsTravelerAuthModalOpen(true);
               }}
             />
@@ -537,10 +616,7 @@ export default function App() {
 
           <AiCustomerConcierge
             packages={packages}
-            onSelectPackage={(pkg) => {
-              setPreSelectedPackage(pkg);
-              setIsBookingModalOpen(true);
-            }}
+            onSelectPackage={(pkg) => handleOpenBookingModalWithAuth(pkg)}
           />
         </>
       ) : (
@@ -687,6 +763,18 @@ export default function App() {
         onClosePreferencesModal={() => setIsCookiePreferencesOpen(false)}
       />
 
+      {/* My Account & Traveler Profile Modal */}
+      <MyAccountModal
+        isOpen={isMyAccountModalOpen}
+        onClose={() => setIsMyAccountModalOpen(false)}
+        travelerUser={travelerUser}
+        userBookings={customerVisibleBookings}
+        onUpdateProfile={(updatedProfile) => setTravelerUser(updatedProfile)}
+        onUpdateAppSettings={(updatedSettings) => setAppSettings({ ...appSettings, ...updatedSettings })}
+        appSettings={appSettings}
+        onOpenTracker={handleOpenTracker}
+      />
+
       {/* Interactive Full-Screen Promotional Advertisement Modal */}
       {appSettings.promo && (
         <ClientPromoModal
@@ -694,8 +782,8 @@ export default function App() {
           isOpen={isPromoModalOpen}
           onClose={() => setIsPromoModalOpen(false)}
           onClaimPromo={() => {
-            if (appSettings.promo?.code) {
-              setActivePromoCode(appSettings.promo.code);
+            if (appSettings.promo?.discountCode) {
+              setActivePromoCode(appSettings.promo.discountCode);
             }
             setIsPromoModalOpen(false);
             setIsBookingModalOpen(true);

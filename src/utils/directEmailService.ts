@@ -47,6 +47,9 @@ const EMAILJS_OTP_TEMPLATE_ID = (import.meta as any).env?.VITE_EMAILJS_OTP_TEMPL
 const EMAILJS_BOOKING_TEMPLATE_ID = (import.meta as any).env?.VITE_EMAILJS_BOOKING_TEMPLATE_ID || (import.meta as any).env?.VITE_EMAILJS_TEMPLATE_ID || 'template_q9uz2vn';
 const EMAILJS_PUBLIC_KEY = (import.meta as any).env?.VITE_EMAILJS_PUBLIC_KEY || 'DSkxF4BoS76EQ6B-h';
 
+// Deduplication Lock Cache: prevents duplicate emails within 10 seconds
+const dispatchedEmailLockCache = new Map<string, number>();
+
 /**
  * Dispatches an email using EmailJS REST API or client-side fallback
  */
@@ -55,6 +58,20 @@ export async function sendEmailNotification(payload: EmailPayload): Promise<Send
   const details = payload.bookingDetails;
   const isOtp = payload.type === 'otp' || Boolean(payload.otpCode);
   const selectedTemplateId = isOtp ? EMAILJS_OTP_TEMPLATE_ID : EMAILJS_BOOKING_TEMPLATE_ID;
+
+  // Deduplication guard
+  const lockKey = `${payload.type || 'gen'}_${payload.bookingRef || normEmail}_${payload.subject}`;
+  const now = Date.now();
+  const lastSent = dispatchedEmailLockCache.get(lockKey);
+  if (lastSent && now - lastSent < 10000) {
+    console.warn(`[EmailDeduplication] Prevented duplicate email dispatch for key: ${lockKey}`);
+    return {
+      success: true,
+      provider: 'emailjs',
+      message: 'Email dispatch deduplicated successfully.'
+    };
+  }
+  dispatchedEmailLockCache.set(lockKey, now);
 
   // 1. If EmailJS Public Key is set in environment or dashboard
   if (EMAILJS_PUBLIC_KEY && EMAILJS_SERVICE_ID && selectedTemplateId) {

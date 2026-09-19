@@ -15,6 +15,7 @@ import {
 export const ROLE_DEFAULT_TABS: Record<StaffRole, SubmoduleTab[]> = {
   'Super Admin': [
     'overview',
+    'guide_command',
     'packages',
     'bookings',
     'itineraries',
@@ -42,9 +43,9 @@ export const ROLE_DEFAULT_TABS: Record<StaffRole, SubmoduleTab[]> = {
     'bookings'
   ],
   'Tour Guide': [
+    'guide_command',
     'overview',
-    'itineraries',
-    'bookings'
+    'feedback'
   ],
   'Custom Staff': [
     'overview'
@@ -104,7 +105,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<StaffRole, GranularPermission[]> =
   ],
   'Tour Guide': [
     'bookings.view_manifest',
-    'logistics.dispatch_guide'
+    'bookings.update_status',
+    'logistics.dispatch_guide',
+    'logistics.manage_transport',
+    'feedback.view'
   ],
   'Custom Staff': [
     'bookings.view_manifest'
@@ -113,6 +117,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<StaffRole, GranularPermission[]> =
 
 export const TAB_DISPLAY_NAMES: Record<SubmoduleTab, string> = {
   overview: 'Operations Dashboard',
+  guide_command: 'Field Tour Guide Command',
   packages: 'Tour Package Management',
   bookings: 'Booking & Passenger Manifest',
   itineraries: 'Itinerary & Schedule Dispatch',

@@ -56,7 +56,8 @@ import {
   MessageSquare,
   UploadCloud,
   FileCheck,
-  Tag
+  Tag,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -141,9 +142,49 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
   const [selectedPackage, setSelectedPackage] = useState<TourPackage | null>(preSelectedPackage || null);
   const [bookingStep, setBookingStep] = useState<number>(1);
   const [travelDate, setTravelDate] = useState<string>('2026-08-20');
+  
+  // Revamped Accommodation & Tier Selection (Image 1 & Image 2)
+  const [accommodationType, setAccommodationType] = useState<'single' | 'double' | 'suite' | null>(null);
+  const [packageTier, setPackageTier] = useState<'budget' | 'midrange' | 'luxury' | null>(null);
+  
+  // Tap Loading & Auto-Scroll Helpers
+  const portalContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToTop = () => {
+    if (portalContainerRef.current) {
+      portalContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    const modalScrollParent = portalContainerRef.current?.closest('.overflow-y-auto');
+    if (modalScrollParent) {
+      modalScrollParent.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const triggerTapLoading = (action: () => void, msg = 'Updating options...', shouldScroll = false) => {
+    action();
+    if (shouldScroll) {
+      setTimeout(() => {
+        scrollToTop();
+      }, 50);
+    }
+  };
+  
+  // Revamped Pax Counters (Image 2)
+  const [adultsCount, setAdultsCount] = useState<number>(2);
+  const [childrenCount, setChildrenCount] = useState<number>(0);
+  const [infantsCount, setInfantsCount] = useState<number>(0);
   const [numPax, setNumPax] = useState<number>(2);
-  const [paymentOption, setPaymentOption] = useState<'full' | 'deposit'>('deposit');
-  const [paymentMethod, setPaymentMethod] = useState<'GCash' | 'PayMaya' | 'Cash' | 'Bank Transfer'>('GCash');
+
+  // Sync total pax count from adult + child + infant breakdown
+  React.useEffect(() => {
+    const total = Math.max(1, adultsCount + childrenCount + infantsCount);
+    setNumPax(total);
+    handlePaxCountChange(total);
+  }, [adultsCount, childrenCount, infantsCount]);
+
+  const [paymentOption, setPaymentOption] = useState<'full' | 'deposit' | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'GCash' | 'PayMaya' | 'Cash' | 'Bank Transfer' | null>(null);
   const [referenceNo, setReferenceNo] = useState<string>('');
   const [receiptProofUrl, setReceiptProofUrl] = useState<string>('');
   const [isBankUploading, setIsBankUploading] = useState<boolean>(false);
@@ -167,26 +208,33 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
   const [consentMarketingAccepted, setConsentMarketingAccepted] = useState<boolean>(false);
   const [consentError, setConsentError] = useState<boolean>(false);
 
-  // Customer Contact State
+  // Customer Contact State (Starts completely empty for passenger to fill in)
   const [customerInfo, setCustomerInfo] = useState<Customer>({
     fullName: '',
     email: '',
     phone: '',
     emergencyContact: '',
-    nationality: 'Filipino'
+    nationality: ''
   });
 
-  // Passengers State
+  // Passengers State (Starts completely empty for passengers to fill in)
   const [passengers, setPassengers] = useState<Passenger[]>([
-    { id: 'p1', fullName: '', age: 28, gender: 'Female', passportOrId: '', specialRequirements: '', nationality: 'Filipino', boardingStatus: 'pending' },
-    { id: 'p2', fullName: '', age: 30, gender: 'Male', passportOrId: '', specialRequirements: '', nationality: 'Filipino', boardingStatus: 'pending' }
+    { id: 'p1', fullName: '', age: '' as any, gender: '', passportOrId: '', specialRequirements: '', nationality: '', boardingStatus: 'pending' },
+    { id: 'p2', fullName: '', age: '' as any, gender: '', passportOrId: '', specialRequirements: '', nationality: '', boardingStatus: 'pending' }
   ]);
 
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
   const [isConfirmBookingOpen, setIsConfirmBookingOpen] = useState(false);
+  const [paymentPhotoError, setPaymentPhotoError] = useState<string>('');
 
   const handlePromptFinalizeBooking = () => {
+    if (!receiptProofUrl) {
+      setPaymentPhotoError('Payment photo / screenshot is required to complete your reservation. Please attach your payment receipt or transfer screenshot.');
+      return;
+    }
+    setPaymentPhotoError('');
+
     if (!consentTermsAccepted) {
       setConsentError(true);
       return;
@@ -217,17 +265,6 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
     }
   }, [initialPromoCode, initialDiscountPct]);
 
-  // Synchronize customer contact details with logged-in traveler profile
-  React.useEffect(() => {
-    if (currentUser) {
-      setCustomerInfo((prev) => ({
-        ...prev,
-        fullName: prev.fullName || currentUser.full_name || '',
-        email: prev.email || currentUser.email || '',
-      }));
-    }
-  }, [currentUser]);
-
   // Adjust passengers list dynamically when numPax changes
   const handlePaxCountChange = (count: number) => {
     const validCount = Math.max(1, Math.min(20, count));
@@ -241,11 +278,11 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
           updated.push({
             id: `p-${Date.now()}-${i + 1}`,
             fullName: '',
-            age: 25,
-            gender: i % 2 === 0 ? 'Female' : 'Male',
+            age: '' as any,
+            gender: '',
             passportOrId: '',
             specialRequirements: '',
-            nationality: customerInfo.nationality || 'Filipino',
+            nationality: '',
             boardingStatus: 'pending'
           });
         }
@@ -335,7 +372,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
   // Update passenger boarding status directly in a booking (live reactive state)
   const handleTogglePassengerBoarding = (
     bookingId: string, 
-    passengerId: string, 
+    passengerKey: string | number, 
     newStatus: 'boarded' | 'pending' | 'noshow'
   ) => {
     const targetBooking = bookings.find((b) => b.id === bookingId);
@@ -355,7 +392,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
         }];
 
     const updatedPassengers = currentPassengers.map((p) =>
-      p.id === passengerId ? { ...p, boardingStatus: newStatus } : p
+      p.id === passengerKey || p.fullName === passengerKey ? { ...p, boardingStatus: newStatus } : p
     );
 
     const updatedBooking: Booking = {
@@ -400,30 +437,36 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
     setPromoError('');
   };
 
-  // Calculate pricing
-  const baseRate = selectedPackage ? selectedPackage.pricePerPax : 14500;
-  const conservationFee = 500 * numPax; // Marine sanctuary & environmental fee
-  const baseSubtotal = baseRate * numPax;
+  // Calculate pricing with Accommodation Tier and Occupancy surcharges
+  const tierSurcharge = packageTier === 'luxury' ? 3500 : packageTier === 'midrange' ? 1500 : 0;
+  const occupancySurcharge = accommodationType === 'single' ? 2000 : accommodationType === 'suite' ? 1000 : 0;
+
+  const rawBaseRate = selectedPackage ? selectedPackage.pricePerPax : 14500;
+  const baseRate = rawBaseRate + tierSurcharge;
+  const conservationFee = 500 * Math.max(1, numPax); // Marine sanctuary & environmental fee
+  const baseSubtotal = (baseRate * Math.max(1, numPax)) + occupancySurcharge;
   const discountAmount = appliedPromo ? Math.round((baseSubtotal * appliedPromo.pct) / 100) : 0;
   const discountedSubtotal = Math.max(0, baseSubtotal - discountAmount);
   const grandTotal = discountedSubtotal + conservationFee;
-  const depositAmount = Math.round(grandTotal * 0.5);
+  const depositAmount = Math.round(grandTotal * 0.3); // 30% Downpayment
   const amountToPayNow = paymentOption === 'full' ? grandTotal : depositAmount;
   const balanceDue = paymentOption === 'full' ? 0 : grandTotal - depositAmount;
 
   // Filtered Bookings for the Manifest Table
   const filteredBookings = useMemo(() => {
     return bookings.filter((b) => {
+      if (!b) return false;
+      const q = searchQuery ? searchQuery.toLowerCase() : '';
       const matchesSearch = 
-        !searchQuery ||
-        b.bookingRef.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.customer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.customer.phone.includes(searchQuery) ||
-        b.tourTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        !q ||
+        (b.bookingRef || '').toLowerCase().includes(q) ||
+        (b.customer?.fullName || '').toLowerCase().includes(q) ||
+        (b.customer?.email || '').toLowerCase().includes(q) ||
+        (b.customer?.phone || '').includes(searchQuery) ||
+        (b.tourTitle || '').toLowerCase().includes(q) ||
         (b.passengers && b.passengers.some((p) => 
-          p.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.passportOrId?.toLowerCase().includes(searchQuery.toLowerCase())
+          (p.fullName || '').toLowerCase().includes(q) ||
+          (p.passportOrId || '').toLowerCase().includes(q)
         ));
 
       const matchesStatus = statusFilter === 'All' || b.bookingStatus === statusFilter;
@@ -506,9 +549,15 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
     return list;
   }, [filteredBookings, rollcallStatusFilter]);
 
+  const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
+
   // Form submission: Create Official Booking
   const handleFinalizeBooking = () => {
+    if (isSubmittingBooking) return;
+    setIsSubmittingBooking(true);
+
     if (!currentUser) {
+      setIsSubmittingBooking(false);
       if (onRequireAuth) {
         onRequireAuth();
       }
@@ -516,12 +565,16 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
     }
 
     if (!consentTermsAccepted) {
+      setIsSubmittingBooking(false);
       setConsentError(true);
       return;
     }
     setConsentError(false);
 
-    if (!selectedPackage) return;
+    if (!selectedPackage) {
+      setIsSubmittingBooking(false);
+      return;
+    }
 
     const newBookingId = `bk-${Date.now()}`;
     // Systematic randomized reference format: HT-2026-[NUM][CHAR][NUM][CHAR] (e.g. HT-2026-8K4M)
@@ -573,7 +626,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
           date: new Date().toISOString().split('T')[0],
           amount: amountToPayNow,
           method: paymentMethod,
-          referenceNo: referenceNo.trim() || `${paymentMethod.slice(0, 2).toUpperCase()}-${Date.now().toString().slice(-8)}`,
+          referenceNo: referenceNo.trim() || `${(paymentMethod || 'PAY').slice(0, 2).toUpperCase()}-${Date.now().toString().slice(-8)}`,
           status: 'Pending Verification', // Strict Anti-Scam: Requires manual finance cross-audit
           notes: `${paymentOption === 'full' ? 'Full Settlement Upon Reservation' : '50% Outbound Guarantee Deposit'} via ${paymentMethod}${referenceNo ? ` (Ref: ${referenceNo})` : ''}`,
           receiptProofUrl: receiptProofUrl || undefined
@@ -693,6 +746,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
     setConfirmedBooking(createdBooking);
     setBookingStep(4); // Success step
     setIsGuidanceWalkthroughOpen(true); // Guide client post-booking where updates appear
+    setIsSubmittingBooking(false);
 
     // Smooth scroll modal container so Step 4 confirmation is immediately at top
     setTimeout(() => {
@@ -1191,11 +1245,32 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
       {/* ========================================================================= */}
       {(!isOperatorView || operatorViewTab === 'new_booking') && (
         <motion.div
+          ref={portalContainerRef}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
-          className="space-y-6"
+          className="space-y-6 relative"
         >
+          {/* Guest Sign-In Notice Banner */}
+          {!currentUser && !isOperatorView && (
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-200 text-xs">
+              <div className="flex items-center gap-2.5">
+                <UserCheck className="w-5 h-5 text-amber-400 shrink-0" />
+                <div>
+                  <p className="font-semibold text-white">Sign in required for checkout & manifest registration</p>
+                  <p className="text-[11px] text-amber-200/80">Please log in to your account to complete your booking voucher and passenger manifest.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onRequireAuth?.()}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs shadow-md whitespace-nowrap transition-all cursor-pointer"
+              >
+                Sign In / Register
+              </button>
+            </div>
+          )}
+
           {/* Progress Step Indicator (Steps 1 to 3) */}
           {bookingStep <= 3 && (
             <div className="bg-[#090E14] border border-white/10 p-4 rounded-2xl flex items-center justify-between">
@@ -1250,28 +1325,37 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                       Select Destination Expedition Package
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {packages.map((pkg) => (
-                        <div
-                          key={pkg.id}
-                          onClick={() => setSelectedPackage(pkg)}
-                          className="bg-[#090E14] hover:bg-[#0E151E] p-4 rounded-2xl border border-white/10 hover:border-sunset-coral transition-all cursor-pointer space-y-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono text-sunset-coral uppercase tracking-wider">
-                              {pkg.category}
-                            </span>
-                            <span className="text-xs font-bold text-ivory font-mono">
-                              ₱{pkg.pricePerPax.toLocaleString()} / pax
-                            </span>
-                          </div>
-                          <h4 className="font-serif-display text-base text-ivory line-clamp-1">{pkg.title}</h4>
-                          <p className="text-[11px] text-sand-muted line-clamp-2">{pkg.subtitle}</p>
-                          <div className="flex items-center gap-2 text-[11px] text-sand-muted pt-1">
-                            <Clock className="w-3 h-3 text-sunset-coral" />
-                            <span>{pkg.durationDays}D / {pkg.durationNights}N</span>
-                          </div>
-                        </div>
-                      ))}
+                      {packages.map((pkg) => {
+                        const isSelected = selectedPackage?.id === pkg.id;
+                        return (
+                          <motion.div
+                            key={pkg.id}
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => triggerTapLoading(() => setSelectedPackage(pkg), `Selecting ${pkg.title}...`)}
+                            className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-2 ${
+                              isSelected
+                                ? 'bg-gradient-to-r from-sunset-coral/25 via-sunset-coral/10 to-[#0B121A] border-sunset-coral ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/20'
+                                : 'bg-[#0B121A] border-white/20 hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-mono text-sunset-coral uppercase tracking-wider font-bold">
+                                {pkg.category}
+                              </span>
+                              <span className="text-xs font-bold text-ivory font-mono">
+                                ₱{pkg.pricePerPax.toLocaleString()} / pax
+                              </span>
+                            </div>
+                            <h4 className="font-serif-display text-base text-ivory line-clamp-1">{pkg.title}</h4>
+                            <p className="text-[11px] text-sand-muted line-clamp-2">{pkg.subtitle}</p>
+                            <div className="flex items-center gap-2 text-[11px] text-sand-muted pt-1">
+                              <Clock className="w-3.5 h-3.5 text-sunset-coral" />
+                              <span>{pkg.durationDays}D / {pkg.durationNights}N</span>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1309,15 +1393,35 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                   </div>
                 )}
 
-                {/* Schedule & Capacity Controls */}
+                {/* Schedule, Accommodation & Tier Controls */}
                 <div className="bg-[#090E14] border border-white/10 rounded-2xl p-6 space-y-6">
+                  {/* Travel Duration Banner (Image 1 Top Card) */}
+                  <div className="bg-gradient-to-r from-sunset-coral/15 via-amber-500/10 to-transparent border border-sunset-coral/30 p-4 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-sunset-coral/20 border border-sunset-coral/40 flex items-center justify-center text-sunset-coral">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-sunset-coral font-bold block">
+                          Travel Duration Guarantee
+                        </span>
+                        <p className="text-xs font-semibold text-ivory">
+                          The trip for this package will last for <span className="text-sunset-coral font-mono font-bold">{selectedPackage?.durationDays || 3} Days & {selectedPackage?.durationNights || 2} Nights</span>
+                        </p>
+                      </div>
+                    </div>
+                    <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-bold uppercase">
+                      Instant Confirmation
+                    </span>
+                  </div>
+
                   <div className="flex items-center justify-between border-b border-white/10 pb-3">
                     <div>
                       <h4 className="font-serif-display text-lg text-ivory">
-                        Schedule & Expedition Group Size
+                        Departure Date & Schedule
                       </h4>
                       <p className="text-xs text-sand-muted">
-                        Select your preferred embarkation date and configure your group size
+                        Select your preferred embarkation date for guaranteed departure
                       </p>
                     </div>
                     <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-sunset-coral/10 text-sunset-coral border border-sunset-coral/20">
@@ -1325,115 +1429,181 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Departure Date Selector with Quick Pre-picks */}
-                    <div className="space-y-3">
-                      <label className="text-xs font-mono uppercase tracking-wider text-sand-muted flex items-center justify-between">
-                        <span>Preferred Departure Date</span>
-                        <span className="text-[10px] text-sunset-coral font-sans-body">Flexible Rescheduling</span>
-                      </label>
-                      <div className="relative">
-                        <Calendar className="w-4 h-4 text-sunset-coral absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <input
-                          type="date"
-                          value={travelDate}
-                          min={new Date().toISOString().split('T')[0]}
-                          onChange={(e) => setTravelDate(e.target.value)}
-                          className="w-full bg-[#070B0E] border border-white/10 rounded-xl pl-10 pr-3.5 py-3 text-xs text-ivory font-mono focus:outline-none focus:border-sunset-coral shadow-inner"
-                        />
-                      </div>
-                      
-                      {/* Quick Date Shortcuts */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] text-sand-muted font-mono">Suggested:</span>
-                        {[
-                          { label: 'Next Weekend', days: 7 },
-                          { label: '+2 Weeks', days: 14 },
-                          { label: 'Next Month', days: 30 }
-                        ].map((s) => {
-                          const target = new Date();
-                          target.setDate(target.getDate() + s.days);
-                          const dateStr = target.toISOString().split('T')[0];
-                          const isActive = travelDate === dateStr;
-                          return (
-                            <button
-                              key={s.label}
-                              type="button"
-                              onClick={() => setTravelDate(dateStr)}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-mono border transition-all cursor-pointer ${
-                                isActive
-                                  ? 'bg-sunset-coral text-white border-sunset-coral font-semibold'
-                                  : 'bg-white/[0.04] text-sand-muted border-white/5 hover:text-ivory hover:border-white/20'
-                              }`}
-                            >
-                              {s.label}
-                            </button>
-                          );
-                        })}
-                      </div>
+                  {/* Departure Date Selector (Image 1 Style) */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-mono uppercase tracking-wider text-sand-muted flex items-center justify-between">
+                      <span>Select Departure Date</span>
+                      <span className="text-[10px] text-sunset-coral font-sans-body">Flexible Rescheduling</span>
+                    </label>
+                    <div className="relative">
+                      <Calendar className="w-4 h-4 text-sunset-coral absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="date"
+                        value={travelDate}
+                        min={new Date().toISOString().split('T')[0]}
+                        onChange={(e) => setTravelDate(e.target.value)}
+                        className="w-full bg-[#070B0E] border border-white/10 rounded-xl pl-10 pr-3.5 py-3 text-xs text-ivory font-mono focus:outline-none focus:border-sunset-coral shadow-inner"
+                      />
+                    </div>
+                    <p className="text-[11px] text-sand-muted font-mono pt-1">
+                      You can select a departure date between <strong className="text-ivory">{new Date().toLocaleDateString('en-GB')}</strong> and <strong className="text-ivory">31/12/2026</strong>
+                    </p>
+                  </div>
+
+                  {/* Accommodation Occupancy Selector (Image 1 & Image 2) */}
+                  <div className="space-y-3 pt-2 border-t border-white/10">
+                    <div>
+                      <h4 className="font-serif-display text-base text-ivory">Select Accommodation Type</h4>
+                      <p className="text-xs text-sand-muted">What type of room occupancy do you prefer for your stay?</p>
                     </div>
 
-                    {/* Interactive Pax Counter & Breakdown */}
-                    <div className="space-y-3">
-                      <label className="text-xs font-mono uppercase tracking-wider text-sand-muted flex items-center justify-between">
-                        <span>Number of Travelers</span>
-                        <span className="text-[10px] text-emerald-400 font-mono">{numPax} Registered Guests</span>
-                      </label>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handlePaxCountChange(numPax - 1)}
-                          disabled={numPax <= 1}
-                          className="w-11 h-11 rounded-xl bg-[#070B0E] border border-white/10 text-ivory hover:bg-white/[0.08] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-lg cursor-pointer transition-all shadow-sm"
-                        >
-                          -
-                        </button>
-
-                        <div className="flex-1 bg-[#070B0E] border border-white/10 rounded-xl py-2.5 px-3 text-center shadow-inner flex flex-col justify-center">
-                          <span className="font-serif-display text-xl text-ivory font-bold leading-tight">
-                            {numPax} <span className="text-xs font-sans-body font-normal text-sand-muted">Travelers</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Single Occupancy */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => triggerTapLoading(() => setAccommodationType('single'), 'Updating room occupancy...')}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1 ${
+                          accommodationType === 'single'
+                            ? 'bg-gradient-to-r from-sunset-coral/25 via-sunset-coral/10 to-[#0B121A] border-sunset-coral text-ivory ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/20'
+                            : 'bg-[#0B121A] border-white/20 text-sand-muted hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-ivory flex items-center gap-2">
+                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${accommodationType === 'single' ? 'border-sunset-coral bg-sunset-coral' : 'border-white/30'}`}>
+                              {accommodationType === 'single' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </span>
+                            Single Occupancy
                           </span>
-                          <span className="text-[10px] font-mono text-sand-muted">
-                            ₱{((selectedPackage?.pricePerPax || 0) * numPax).toLocaleString()} base
-                          </span>
+                          <span className="text-[10px] font-mono text-amber-400 font-bold">+₱2,000 / room</span>
                         </div>
+                        <p className="text-[11px] text-sand-muted pl-5">
+                          Private room & solo accommodation for maximum privacy during trip.
+                        </p>
+                      </motion.div>
 
-                        <button
-                          type="button"
-                          onClick={() => handlePaxCountChange(numPax + 1)}
-                          disabled={numPax >= 20}
-                          className="w-11 h-11 rounded-xl bg-[#070B0E] border border-white/10 text-ivory hover:bg-white/[0.08] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-lg cursor-pointer transition-all shadow-sm"
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      {/* Quick Pax Presets */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] text-sand-muted font-mono">Party:</span>
-                        {[
-                          { label: 'Solo (1)', count: 1 },
-                          { label: 'Couple (2)', count: 2 },
-                          { label: 'Family (4)', count: 4 },
-                          { label: 'Group (6)', count: 6 },
-                          { label: 'Crew (10)', count: 10 }
-                        ].map((p) => (
-                          <button
-                            key={p.label}
-                            type="button"
-                            onClick={() => handlePaxCountChange(p.count)}
-                            className={`px-2 py-0.5 rounded text-[10px] font-mono border transition-all cursor-pointer ${
-                              numPax === p.count
-                                ? 'bg-sunset-coral text-white border-sunset-coral font-bold shadow-sm'
-                                : 'bg-white/[0.04] text-sand-muted border-white/5 hover:text-ivory hover:border-white/20'
-                            }`}
-                          >
-                            {p.label}
-                          </button>
-                        ))}
-                      </div>
+                      {/* Double Occupancy */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => triggerTapLoading(() => setAccommodationType('double'), 'Updating room occupancy...')}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1 ${
+                          accommodationType === 'double'
+                            ? 'bg-gradient-to-r from-sunset-coral/25 via-sunset-coral/10 to-[#0B121A] border-sunset-coral text-ivory ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/20'
+                            : 'bg-[#0B121A] border-white/20 text-sand-muted hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-ivory flex items-center gap-2">
+                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${accommodationType === 'double' ? 'border-sunset-coral bg-sunset-coral' : 'border-white/30'}`}>
+                              {accommodationType === 'double' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </span>
+                            Double Occupancy
+                          </span>
+                          <span className="text-[10px] font-mono text-emerald-400 font-bold">Standard Included</span>
+                        </div>
+                        <p className="text-[11px] text-sand-muted pl-5">
+                          Twin or double bed room for couples or travel companions willing to share.
+                        </p>
+                      </motion.div>
                     </div>
+                  </div>
+
+                  {/* Select Package Tier (Image 1 & Image 2) */}
+                  <div className="space-y-3 pt-2 border-t border-white/10">
+                    <div>
+                      <h4 className="font-serif-display text-base text-ivory">Select Package Tier</h4>
+                      <p className="text-xs text-sand-muted">Choose your resort tier and room amenities package</p>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {/* Budget / Standard */}
+                      <motion.div
+                        whileHover={{ scale: 1.01, y: -1 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={() => triggerTapLoading(() => setPackageTier('budget'), 'Applying tier rates...')}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                          packageTier === 'budget'
+                            ? 'bg-gradient-to-r from-sunset-coral/25 via-sunset-coral/10 to-[#0B121A] border-sunset-coral text-ivory ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/20'
+                            : 'bg-[#0B121A] border-white/20 text-sand-muted hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${packageTier === 'budget' ? 'border-sunset-coral bg-sunset-coral' : 'border-white/30'}`}>
+                            {packageTier === 'budget' && <span className="w-2 h-2 rounded-full bg-white" />}
+                          </span>
+                          <div>
+                            <div className="font-semibold text-xs text-ivory flex items-center gap-2">
+                              <span>Budget / Standard Tier 😒</span>
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-sand-muted">Garden View Room</span>
+                            </div>
+                            <p className="text-[11px] text-sand-muted mt-0.5">Cozy beachside room with essential amenities and aircon.</p>
+                          </div>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-amber-400 shrink-0">₱{rawBaseRate.toLocaleString()} / pax</span>
+                      </motion.div>
+
+                      {/* Mid-range / Deluxe */}
+                      <motion.div
+                        whileHover={{ scale: 1.01, y: -1 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={() => triggerTapLoading(() => setPackageTier('midrange'), 'Applying tier rates...')}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                          packageTier === 'midrange'
+                            ? 'bg-gradient-to-r from-sunset-coral/25 via-sunset-coral/10 to-[#0B121A] border-sunset-coral text-ivory ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/20'
+                            : 'bg-[#0B121A] border-white/20 text-sand-muted hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${packageTier === 'midrange' ? 'border-sunset-coral bg-sunset-coral' : 'border-white/30'}`}>
+                            {packageTier === 'midrange' && <span className="w-2 h-2 rounded-full bg-white" />}
+                          </span>
+                          <div>
+                            <div className="font-semibold text-xs text-ivory flex items-center gap-2">
+                              <span>Mid-Range / Deluxe Tier ✨</span>
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sunset-coral/20 text-sunset-coral font-bold">Most Popular</span>
+                            </div>
+                            <p className="text-[11px] text-sand-muted mt-0.5">Ocean view room with private balcony and welcome drinks.</p>
+                          </div>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-emerald-400 shrink-0">₱{(rawBaseRate + 1500).toLocaleString()} / pax</span>
+                      </motion.div>
+
+                      {/* Luxury / Villa */}
+                      <motion.div
+                        whileHover={{ scale: 1.01, y: -1 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={() => triggerTapLoading(() => setPackageTier('luxury'), 'Applying tier rates...')}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                          packageTier === 'luxury'
+                            ? 'bg-gradient-to-r from-sunset-coral/25 via-sunset-coral/10 to-[#0B121A] border-sunset-coral text-ivory ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/20'
+                            : 'bg-[#0B121A] border-white/20 text-sand-muted hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${packageTier === 'luxury' ? 'border-sunset-coral bg-sunset-coral' : 'border-white/30'}`}>
+                            {packageTier === 'luxury' && <span className="w-2 h-2 rounded-full bg-white" />}
+                          </span>
+                          <div>
+                            <div className="font-semibold text-xs text-ivory flex items-center gap-2">
+                              <span>Luxury / Pool Villa 💎</span>
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">All-Inclusive</span>
+                            </div>
+                            <p className="text-[11px] text-sand-muted mt-0.5">Private infinity pool villa, personal butler, and massage sessions.</p>
+                          </div>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-purple-400 shrink-0">₱{(rawBaseRate + 3500).toLocaleString()} / pax</span>
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {/* Important Alert Notice (Image 1 Style) */}
+                  <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2.5">
+                    <AlertCircle className="w-4.5 h-4.5 text-amber-400 shrink-0 mt-0.5" />
+                    <p className="leading-relaxed font-light">
+                      Booking reservations for this tour date close <strong>3 days prior to departure</strong>. Marine conservation fees of ₱500/pax are pre-registered with the LGU.
+                    </p>
                   </div>
 
                   {/* Included Perks / Reassurance Banner */}
@@ -1553,7 +1723,15 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
 
                   <button
                     disabled={!selectedPackage}
-                    onClick={() => setBookingStep(2)}
+                    onClick={() => {
+                      if (!currentUser && !isOperatorView) {
+                        if (onRequireAuth) {
+                          onRequireAuth();
+                        }
+                        return;
+                      }
+                      triggerTapLoading(() => setBookingStep(2), 'Preparing passenger manifest...', true);
+                    }}
                     className="w-full py-3 rounded-xl bg-sunset-coral hover:bg-sunset-coral/90 disabled:opacity-50 text-white font-medium text-xs shadow-lg shadow-sunset-coral/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
                     <span>Proceed to Passenger Manifest</span>
@@ -1572,6 +1750,103 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
+              {/* Detailed Guests & Passengers Counter Card (Image 2 Style) */}
+              <div className="bg-[#090E14] border border-white/10 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <h4 className="font-serif-display text-lg text-ivory">
+                      Travelers & Guest Breakdown
+                    </h4>
+                    <p className="text-xs text-sand-muted">
+                      Specify the age category for each traveler in your group
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-sunset-coral bg-sunset-coral/10 px-3 py-1 rounded-full border border-sunset-coral/20">
+                    Total: {numPax} Passengers
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Adults Counter */}
+                  <div className="bg-[#070B0E] p-4 rounded-2xl border border-white/10 flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-xs text-ivory">Adults</div>
+                      <div className="text-[10px] text-sand-muted">Age 18+ years</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setAdultsCount(Math.max(1, adultsCount - 1))}
+                        disabled={adultsCount <= 1}
+                        className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-ivory hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-sm cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <span className="w-6 text-center font-mono font-bold text-ivory text-sm">{adultsCount}</span>
+                      <button
+                        type="button"
+                        onClick={() => setAdultsCount(adultsCount + 1)}
+                        className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-ivory hover:bg-white/10 flex items-center justify-center font-bold text-sm cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Children Counter */}
+                  <div className="bg-[#070B0E] p-4 rounded-2xl border border-white/10 flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-xs text-ivory">Children</div>
+                      <div className="text-[10px] text-sand-muted">Age 2-17 years</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setChildrenCount(Math.max(0, childrenCount - 1))}
+                        disabled={childrenCount <= 0}
+                        className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-ivory hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-sm cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <span className="w-6 text-center font-mono font-bold text-ivory text-sm">{childrenCount}</span>
+                      <button
+                        type="button"
+                        onClick={() => setChildrenCount(childrenCount + 1)}
+                        className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-ivory hover:bg-white/10 flex items-center justify-center font-bold text-sm cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Infants Counter */}
+                  <div className="bg-[#070B0E] p-4 rounded-2xl border border-white/10 flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-xs text-ivory">Infants</div>
+                      <div className="text-[10px] text-sand-muted">Under 2 years</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setInfantsCount(Math.max(0, infantsCount - 1))}
+                        disabled={infantsCount <= 0}
+                        className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-ivory hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-sm cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <span className="w-6 text-center font-mono font-bold text-ivory text-sm">{infantsCount}</span>
+                      <button
+                        type="button"
+                        onClick={() => setInfantsCount(infantsCount + 1)}
+                        className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-ivory hover:bg-white/10 flex items-center justify-center font-bold text-sm cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Lead Guest Contact Register */}
               <div className="bg-[#090E14] border border-white/10 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -1587,7 +1862,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                     type="button"
                     onClick={handleCopyLeadToPaxOne}
                     disabled={!customerInfo.fullName}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-sunset-coral border border-sunset-coral/30 disabled:opacity-40 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs text-sunset-coral font-medium border border-sunset-coral/40 disabled:opacity-40 transition-all cursor-pointer"
                   >
                     <Copy className="w-3.5 h-3.5" />
                     <span>Copy to Passenger 1</span>
@@ -1596,71 +1871,76 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono text-sand-muted uppercase block">
-                      Lead Guest Full Name *
+                    <label htmlFor="lead-fullname" className="text-xs font-semibold text-ivory/90 block">
+                      Lead Guest Full Name <span className="text-rose-400">*</span>
                     </label>
                     <input
+                      id="lead-fullname"
                       type="text"
                       required
                       placeholder="e.g. Maria Santos"
                       value={customerInfo.fullName}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, fullName: e.target.value })}
-                      className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral"
+                      className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory placeholder-sand-muted/70 focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono text-sand-muted uppercase block">
-                      Email Address *
+                    <label htmlFor="lead-email" className="text-xs font-semibold text-ivory/90 block">
+                      Email Address <span className="text-rose-400">*</span>
                     </label>
                     <input
+                      id="lead-email"
                       type="email"
                       required
                       placeholder="e.g. maria.santos@gmail.com"
                       value={customerInfo.email}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
-                      className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral"
+                      className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory placeholder-sand-muted/70 focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono text-sand-muted uppercase block">
-                      Mobile / WhatsApp *
+                    <label htmlFor="lead-phone" className="text-xs font-semibold text-ivory/90 block">
+                      Mobile / WhatsApp <span className="text-rose-400">*</span>
                     </label>
                     <input
+                      id="lead-phone"
                       type="tel"
                       required
                       placeholder="e.g. +63 917 123 4567"
                       value={customerInfo.phone}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-                      className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral"
+                      className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory placeholder-sand-muted/70 focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                     />
                   </div>
 
                   <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-[11px] font-mono text-sand-muted uppercase block">
-                      Emergency Contact Name & Telephone *
+                    <label htmlFor="lead-emergency" className="text-xs font-semibold text-ivory/90 block">
+                      Emergency Contact Name & Telephone <span className="text-rose-400">*</span>
                     </label>
                     <input
+                      id="lead-emergency"
                       type="text"
                       required
                       placeholder="e.g. Roberto Santos (+63 918 222 9011)"
                       value={customerInfo.emergencyContact}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, emergencyContact: e.target.value })}
-                      className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral"
+                      className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory placeholder-sand-muted/70 focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono text-sand-muted uppercase block">
+                    <label htmlFor="lead-nationality" className="text-xs font-semibold text-ivory/90 block">
                       Nationality
                     </label>
                     <input
+                      id="lead-nationality"
                       type="text"
                       placeholder="e.g. Filipino, American, etc."
                       value={customerInfo.nationality}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, nationality: e.target.value })}
-                      className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral"
+                      className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory placeholder-sand-muted/70 focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                     />
                   </div>
                 </div>
@@ -1681,7 +1961,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                   <button
                     type="button"
                     onClick={() => handlePaxCountChange(passengers.length + 1)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-ivory border border-white/10 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-ivory border border-white/15 transition-all cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-sunset-coral" />
                     <span>Add Guest</span>
@@ -1697,7 +1977,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                       exit={{ opacity: 0, scale: 0.95 }}
                       className="bg-[#090E14] border border-white/10 rounded-2xl p-5 space-y-4"
                     >
-                      <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full bg-sunset-coral/20 text-sunset-coral border border-sunset-coral/30 flex items-center justify-center font-mono text-xs font-bold">
                             {index + 1}
@@ -1715,7 +1995,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                               setPassengers(updated);
                               setNumPax(updated.length);
                             }}
-                            className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                            className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer font-medium"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Remove</span>
@@ -1725,98 +2005,108 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
 
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         {/* Name */}
-                        <div className="sm:col-span-2 space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-sand-muted">
-                            Full Legal Name (as in Passport / ID) *
+                        <div className="sm:col-span-2 space-y-1.5">
+                          <label htmlFor={`pax-${index}-fullname`} className="text-xs font-semibold text-ivory/90 block">
+                            Full Legal Name (as in Passport / ID) <span className="text-rose-400">*</span>
                           </label>
                           <input
+                            id={`pax-${index}-fullname`}
                             type="text"
                             required
                             placeholder="Full Name"
                             value={p.fullName}
                             onChange={(e) => handleUpdatePassenger(index, 'fullName', e.target.value)}
-                            className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral"
+                            className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory placeholder-sand-muted/70 focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                           />
                         </div>
 
                         {/* Age */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-sand-muted">Age *</label>
+                        <div className="space-y-1.5">
+                          <label htmlFor={`pax-${index}-age`} className="text-xs font-semibold text-ivory/90 block">
+                            Age <span className="text-rose-400">*</span>
+                          </label>
                           <input
+                            id={`pax-${index}-age`}
                             type="number"
                             min="1"
                             max="110"
                             value={p.age || ''}
                             onChange={(e) => handleUpdatePassenger(index, 'age', parseInt(e.target.value) || 0)}
-                            className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral"
+                            className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                           />
                         </div>
 
                         {/* Gender */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-sand-muted">Gender</label>
+                        <div className="space-y-1.5">
+                          <label htmlFor={`pax-${index}-gender`} className="text-xs font-semibold text-ivory/90 block">
+                            Gender
+                          </label>
                           <select
-                            value={p.gender}
+                            id={`pax-${index}-gender`}
+                            value={p.gender || ''}
                             onChange={(e) => handleUpdatePassenger(index, 'gender', e.target.value)}
-                            className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral cursor-pointer"
+                            className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral cursor-pointer transition-all"
                           >
-                            <option value="Female">Female</option>
-                            <option value="Male">Male</option>
-                            <option value="Other">Other</option>
+                            <option value="" className="bg-[#0B131B] text-sand-muted">Select Gender</option>
+                            <option value="Female" className="bg-[#0B131B] text-ivory">Female</option>
+                            <option value="Male" className="bg-[#0B131B] text-ivory">Male</option>
+                            <option value="Other" className="bg-[#0B131B] text-ivory">Other</option>
                           </select>
                         </div>
 
                         {/* ID Document Selection & Conditional Number Input */}
-                        <div className="sm:col-span-2 space-y-2.5 pt-2 border-t border-white/5">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="sm:col-span-4 space-y-2.5 pt-3 border-t border-white/10">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Dropdown for Document Type / Status */}
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-mono uppercase text-sand-muted flex items-center justify-between">
-                                <span>Passport / Identification Option *</span>
+                            <div className="space-y-1.5">
+                              <label htmlFor={`pax-${index}-idtype`} className="text-xs font-semibold text-ivory/90 flex items-center justify-between">
+                                <span>Passport / Identification Option <span className="text-rose-400">*</span></span>
                                 {getPassengerIdType(p) === 'none' ? (
-                                  <span className="text-[9px] text-amber-400 font-sans font-medium px-1.5 py-0.5 bg-amber-500/10 rounded border border-amber-500/20">
+                                  <span className="text-[10px] text-amber-400 font-medium px-2 py-0.5 bg-amber-500/15 rounded border border-amber-500/30">
                                     To Follow
                                   </span>
                                 ) : (
-                                  <span className="text-[9px] text-emerald-400 font-sans font-medium px-1.5 py-0.5 bg-emerald-500/10 rounded border border-emerald-500/20">
+                                  <span className="text-[10px] text-emerald-400 font-medium px-2 py-0.5 bg-emerald-500/15 rounded border border-emerald-500/30">
                                     ID Selected
                                   </span>
                                 )}
                               </label>
                               <select
+                                id={`pax-${index}-idtype`}
                                 value={getPassengerIdType(p)}
                                 onChange={(e) => handleIdTypeChange(index, e.target.value)}
-                                className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral cursor-pointer"
+                                className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral cursor-pointer transition-all"
                               >
-                                <optgroup label="Government & Travel IDs">
-                                  <option value="ph_passport">Philippine Passport</option>
-                                  <option value="foreign_passport">Foreign Passport (International)</option>
-                                  <option value="philsys">PhilSys National ID (Card / ePhilID)</option>
-                                  <option value="driver_license">Driver's License (LTO)</option>
-                                  <option value="umid_sss">UMID / SSS / GSIS Card</option>
-                                  <option value="postal_id">Postal ID (Digitized)</option>
-                                  <option value="voter_id">Voter's ID / Certificate (COMELEC)</option>
-                                  <option value="prc_id">PRC Professional License</option>
-                                  <option value="student_id">Student / School ID (Minors & Youth)</option>
-                                  <option value="birth_cert">PSA Birth Certificate (Minors / Infants)</option>
-                                  <option value="other_govt">Other Government-Issued Photo ID</option>
+                                <optgroup label="Government & Travel IDs" className="bg-[#0B131B] text-ivory font-semibold">
+                                  <option value="ph_passport" className="bg-[#0B131B] text-ivory">Philippine Passport</option>
+                                  <option value="foreign_passport" className="bg-[#0B131B] text-ivory">Foreign Passport (International)</option>
+                                  <option value="philsys" className="bg-[#0B131B] text-ivory">PhilSys National ID (Card / ePhilID)</option>
+                                  <option value="driver_license" className="bg-[#0B131B] text-ivory">Driver's License (LTO)</option>
+                                  <option value="umid_sss" className="bg-[#0B131B] text-ivory">UMID / SSS / GSIS Card</option>
+                                  <option value="postal_id" className="bg-[#0B131B] text-ivory">Postal ID (Digitized)</option>
+                                  <option value="voter_id" className="bg-[#0B131B] text-ivory">Voter's ID / Certificate (COMELEC)</option>
+                                  <option value="prc_id" className="bg-[#0B131B] text-ivory">PRC Professional License</option>
+                                  <option value="student_id" className="bg-[#0B131B] text-ivory">Student / School ID (Minors & Youth)</option>
+                                  <option value="birth_cert" className="bg-[#0B131B] text-ivory">PSA Birth Certificate (Minors / Infants)</option>
+                                  <option value="other_govt" className="bg-[#0B131B] text-ivory">Other Government-Issued Photo ID</option>
                                 </optgroup>
-                                <optgroup label="No Document On Hand">
-                                  <option value="none">I don't have a Passport / ID yet (To follow / No ID)</option>
+                                <optgroup label="No Document On Hand" className="bg-[#0B131B] text-amber-300 font-semibold">
+                                  <option value="none" className="bg-[#0B131B] text-amber-300">I don't have a Passport / ID yet (To follow / No ID)</option>
                                 </optgroup>
                               </select>
                             </div>
 
                             {/* Conditional input if they DO have the thing on the dropdown */}
                             {getPassengerIdType(p) !== 'none' ? (
-                              <div className="space-y-1">
-                                <label className="text-[10px] font-mono uppercase text-sand-muted flex items-center justify-between">
+                              <div className="space-y-1.5">
+                                <label htmlFor={`pax-${index}-idnum`} className="text-xs font-semibold text-ivory/90 flex items-center justify-between">
                                   <span>
-                                    {PASSENGER_ID_OPTIONS.find((o) => o.id === getPassengerIdType(p))?.label || 'ID'} Number *
+                                    {PASSENGER_ID_OPTIONS.find((o) => o.id === getPassengerIdType(p))?.label || 'ID'} Number <span className="text-rose-400">*</span>
                                   </span>
-                                  <span className="text-[9px] text-sunset-coral">Enter Number</span>
+                                  <span className="text-[10px] text-sunset-coral font-mono">Required</span>
                                 </label>
                                 <input
+                                  id={`pax-${index}-idnum`}
                                   type="text"
                                   placeholder={
                                     PASSENGER_ID_OPTIONS.find((o) => o.id === getPassengerIdType(p))?.placeholder ||
@@ -1824,15 +2114,15 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                                   }
                                   value={p.passportOrId === 'No ID (To Follow)' ? '' : p.passportOrId}
                                   onChange={(e) => handleUpdatePassenger(index, 'passportOrId', e.target.value)}
-                                  className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3 py-2 text-xs text-ivory font-mono focus:outline-none focus:border-sunset-coral"
+                                  className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory font-mono focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                                 />
                               </div>
                             ) : (
                               <div className="flex items-end">
-                                <div className="w-full p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-center gap-2">
-                                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                                  <span className="text-[11px] leading-tight text-amber-200/90">
-                                    No ID on hand yet. You can still complete booking! Passenger can present a school ID, birth certificate, or send ID details before tour departure.
+                                <div className="w-full p-3 rounded-xl bg-amber-500/15 border border-amber-500/35 text-amber-200 text-xs flex items-center gap-2.5 shadow-sm">
+                                  <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+                                  <span className="text-xs leading-relaxed text-amber-200 font-medium">
+                                    No ID on hand yet. You can still complete booking! Passengers can present a school ID, birth certificate, or send ID details before tour departure.
                                   </span>
                                 </div>
                               </div>
@@ -1841,16 +2131,17 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                         </div>
 
                         {/* Special Requirements / Dietary */}
-                        <div className="sm:col-span-2 space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-sand-muted">
+                        <div className="sm:col-span-4 space-y-1.5 pt-1">
+                          <label htmlFor={`pax-${index}-special`} className="text-xs font-semibold text-ivory/90 block">
                             Special Needs, Dietary or Medical Alerts
                           </label>
                           <input
+                            id={`pax-${index}-special`}
                             type="text"
-                            placeholder="e.g. Vegetarian, Senior assistance, etc."
+                            placeholder="e.g. Vegetarian, Senior assistance, Wheelchair access, etc."
                             value={p.specialRequirements || ''}
                             onChange={(e) => handleUpdatePassenger(index, 'specialRequirements', e.target.value)}
-                            className="w-full bg-[#070B0E] border border-white/10 rounded-xl px-3 py-2 text-xs text-ivory focus:outline-none focus:border-sunset-coral"
+                            className="w-full bg-[#0B131B] border border-white/20 hover:border-white/35 rounded-xl px-4 py-2.5 text-sm text-ivory placeholder-sand-muted/70 focus:outline-none focus:ring-2 focus:ring-sunset-coral/50 focus:border-sunset-coral transition-all"
                           />
                         </div>
                       </div>
@@ -1895,7 +2186,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
               <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
-                  onClick={() => setBookingStep(1)}
+                  onClick={() => triggerTapLoading(() => setBookingStep(1), 'Returning to schedule...', true)}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-ivory font-medium transition-all cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -1909,7 +2200,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                       alert('Please complete the lead guest contact information before continuing.');
                       return;
                     }
-                    setBookingStep(3);
+                    triggerTapLoading(() => setBookingStep(3), 'Securing payment gateway...', true);
                   }}
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-sunset-coral hover:bg-sunset-coral/90 text-white text-xs font-medium shadow-lg shadow-sunset-coral/20 transition-all cursor-pointer"
                 >
@@ -1936,16 +2227,18 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div
-                      onClick={() => setPaymentOption('deposit')}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-1 ${
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => triggerTapLoading(() => setPaymentOption('deposit'), 'Calculating downpayment terms...')}
+                      className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1 ${
                         paymentOption === 'deposit'
-                          ? 'bg-sunset-coral/10 border-sunset-coral text-ivory'
-                          : 'bg-[#070B0E] border-white/10 text-sand-muted hover:border-white/20'
+                          ? 'bg-gradient-to-r from-sunset-coral/25 via-sunset-coral/10 to-[#0B121A] border-sunset-coral text-ivory ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/20'
+                          : 'bg-[#0B121A] border-white/20 text-sand-muted hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold uppercase">50% Downpayment Deposit</span>
+                        <span className="font-mono text-xs font-bold uppercase text-ivory">50% Downpayment Deposit</span>
                         {paymentOption === 'deposit' && <Check className="w-4 h-4 text-sunset-coral" />}
                       </div>
                       <div className="font-serif-display text-xl text-ivory font-bold">
@@ -1954,18 +2247,20 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                       <p className="text-[11px] text-sand-muted">
                         Guarantees your slot & hotel reservation. Remaining ₱{balanceDue.toLocaleString()} upon arrival.
                       </p>
-                    </div>
+                    </motion.div>
 
-                    <div
-                      onClick={() => setPaymentOption('full')}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-1 ${
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => triggerTapLoading(() => setPaymentOption('full'), 'Calculating full settlement...')}
+                      className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1 ${
                         paymentOption === 'full'
-                          ? 'bg-sunset-coral/10 border-sunset-coral text-ivory'
-                          : 'bg-[#070B0E] border-white/10 text-sand-muted hover:border-white/20'
+                          ? 'bg-gradient-to-r from-sunset-coral/25 via-sunset-coral/10 to-[#0B121A] border-sunset-coral text-ivory ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/20'
+                          : 'bg-[#0B121A] border-white/20 text-sand-muted hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold uppercase">100% Full Settlement</span>
+                        <span className="font-mono text-xs font-bold uppercase text-ivory">100% Full Settlement</span>
                         {paymentOption === 'full' && <Check className="w-4 h-4 text-sunset-coral" />}
                       </div>
                       <div className="font-serif-display text-xl text-ivory font-bold">
@@ -1974,7 +2269,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                       <p className="text-[11px] text-sand-muted">
                         Zero balance. Receive all confirmed tour vouchers and instant boarding passes.
                       </p>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
 
@@ -1999,19 +2294,21 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                       const IconComp = m.icon;
                       const isSelected = paymentMethod === m.id;
                       return (
-                        <div
+                        <motion.div
                           key={m.id}
-                          onClick={() => setPaymentMethod(m.id as any)}
-                          className={`p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
+                          whileHover={{ scale: 1.04, y: -2 }}
+                          whileTap={{ scale: 0.96 }}
+                          onClick={() => triggerTapLoading(() => setPaymentMethod(m.id as any), `Connecting ${m.name}...`)}
+                          className={`p-3.5 rounded-xl border-2 text-center transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-sunset-coral/15 border-sunset-coral text-ivory font-semibold shadow-lg shadow-sunset-coral/10'
-                              : 'bg-[#070B0E] border-white/10 text-sand-muted hover:border-white/20'
+                              ? 'bg-gradient-to-br from-sunset-coral/30 via-sunset-coral/15 to-[#0B121A] border-sunset-coral text-ivory font-semibold ring-2 ring-sunset-coral/40 shadow-xl shadow-sunset-coral/25'
+                              : 'bg-[#0B121A] border-white/20 text-sand-muted hover:border-sunset-coral hover:bg-[#101A24] hover:shadow-xl hover:shadow-sunset-coral/15'
                           }`}
                         >
-                          <IconComp className={`w-4 h-4 mx-auto mb-1.5 ${isSelected ? 'text-sunset-coral' : 'text-sand-muted'}`} />
-                          <div className="text-xs">{m.name}</div>
+                          <IconComp className={`w-4.5 h-4.5 mx-auto mb-1.5 ${isSelected ? 'text-sunset-coral' : 'text-sand-muted'}`} />
+                          <div className="text-xs text-ivory font-medium">{m.name}</div>
                           <div className="text-[10px] text-sand-muted font-mono">{m.desc}</div>
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -2094,7 +2391,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                           {/* Bank Deposit Slip Upload */}
                           <div className="space-y-1.5 pt-1">
                             <span className="text-xs text-sand-muted block font-medium">
-                              Upload Deposit Slip / Bank Mobile App Screenshot <span className="text-sand-muted text-[10px]">(Optional for preliminary hold)</span>
+                              Upload Deposit Slip / Bank Mobile App Screenshot <span className="text-sunset-coral text-[11px] font-semibold">* Required</span>
                             </span>
 
                             {receiptProofUrl ? (
@@ -2119,7 +2416,10 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={() => setReceiptProofUrl('')}
+                                  onClick={() => {
+                                    setReceiptProofUrl('');
+                                    setPaymentPhotoError('');
+                                  }}
                                   className="text-xs text-sand-muted hover:text-rose-400 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 transition-all cursor-pointer font-mono"
                                 >
                                   Change Slip
@@ -2131,7 +2431,10 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                                   <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={handleBankFileUpload}
+                                    onChange={(e) => {
+                                      setPaymentPhotoError('');
+                                      handleBankFileUpload(e);
+                                    }}
                                     className="hidden"
                                   />
                                   <UploadCloud className="w-5 h-5 text-sand-muted" />
@@ -2145,7 +2448,10 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                                 <div className="flex justify-end">
                                   <button
                                     type="button"
-                                    onClick={handleAttachBankSample}
+                                    onClick={() => {
+                                      setPaymentPhotoError('');
+                                      handleAttachBankSample();
+                                    }}
                                     className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 active:scale-95 transition-all cursor-pointer"
                                   >
                                     <Sparkles className="w-3 h-3" />
@@ -2197,6 +2503,13 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
                       <AlertCircle className="w-3.5 h-3.5" />
                       Please accept the terms and statutory manifest declaration to proceed.
                     </p>
+                  )}
+
+                  {paymentPhotoError && (
+                    <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-mono flex items-start gap-2 animate-shake">
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                      <span>{paymentPhotoError}</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -2302,7 +2615,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
 
                   <button
                     type="button"
-                    onClick={handlePromptFinalizeBooking}
+                    onClick={() => triggerTapLoading(() => handlePromptFinalizeBooking(), 'Verifying consent & details...')}
                     className="btn-pop btn-shimmer-wrap w-full py-3.5 rounded-xl bg-sunset-coral hover:bg-sunset-coral/90 active:scale-95 text-white font-medium text-xs shadow-lg shadow-sunset-coral/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
                     <ShieldCheck className="w-4 h-4" />
@@ -2311,7 +2624,7 @@ export const CustomerBookingPortal: React.FC<CustomerBookingPortalProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => setBookingStep(2)}
+                    onClick={() => triggerTapLoading(() => setBookingStep(2), 'Returning to manifest...', true)}
                     className="btn-pop w-full py-2 text-xs text-sand-muted hover:text-ivory text-center font-mono cursor-pointer active:scale-95 transition-all"
                   >
                     Back to Passengers
@@ -2522,6 +2835,8 @@ Phone: 0916 525 3517`;
         </motion.div>
       )}
 
+
+
       {/* ========================================================================= */}
       {/* 6. DRAWER: BOOKING DETAIL INSPECTION SLIDE-OVER */}
       {/* ========================================================================= */}
@@ -2531,6 +2846,7 @@ Phone: 0916 525 3517`;
         onClose={() => setIsDetailDrawerOpen(false)}
         onUpdateStatus={onUpdateBookingStatus}
         onUpdatePassengerStatus={handleTogglePassengerBoarding}
+        onUpdateBooking={onUpdateBooking}
       />
 
       {/* ========================================================================= */}
@@ -2561,12 +2877,12 @@ Phone: 0916 525 3517`;
         title="Confirm Official Expedition Reservation?"
         message="Please verify your expedition details before final submission. Once registered, your passenger manifest is submitted to tour operations."
         details={[
-          { label: 'Expedition Package', value: selectedPackage?.title || '' },
-          { label: 'Lead Traveler', value: customerInfo.fullName },
+          { label: 'Expedition Package', value: selectedPackage?.title || 'None Selected' },
+          { label: 'Lead Traveler', value: customerInfo?.fullName || 'N/A' },
           { label: 'Manifest Count', value: `${numPax} Passenger(s)` },
-          { label: 'Travel Date', value: travelDate },
-          { label: 'Payment Method', value: `${paymentMethod} (${paymentOption.toUpperCase()})` },
-          { label: 'Amount Due Today', value: `₱${amountToPayNow.toLocaleString()}` },
+          { label: 'Travel Date', value: travelDate || 'N/A' },
+          { label: 'Payment Method', value: `${paymentMethod || 'Pending'} (${paymentOption ? paymentOption.toUpperCase() : 'N/A'})` },
+          { label: 'Amount Due Today', value: `₱${(amountToPayNow || 0).toLocaleString()}` },
         ]}
         confirmText="Yes, Confirm & Reserve"
         cancelText="No, Review Details"

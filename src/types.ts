@@ -61,7 +61,7 @@ export interface Passenger {
   id: string;
   fullName: string;
   age: number;
-  gender: 'Male' | 'Female' | 'Other';
+  gender?: 'Male' | 'Female' | 'Other' | '' | string;
   passportOrId: string;
   idType?: string;
   hasId?: boolean;
@@ -217,6 +217,7 @@ export interface CustomerFeedback {
 export type ViewMode = 'customer' | 'operator';
 export type SubmoduleTab = 
   | 'overview'
+  | 'guide_command'
   | 'packages'
   | 'bookings'
   | 'itineraries'

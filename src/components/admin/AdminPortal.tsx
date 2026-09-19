@@ -21,6 +21,7 @@
   import { UserRbacManagement } from '../submodules/UserRbacManagement';
   import { FiscalReconciliation } from '../submodules/FiscalReconciliation';
   import { PaymentGateAudit } from '../submodules/PaymentGateAudit';
+  import { TourGuideCommandCenter } from '../submodules/TourGuideCommandCenter';
   import { AccessDeniedBarrier } from '../common/AccessDeniedBarrier';
   import { hasTabAccess, findStaffAccountByEmail } from '../../utils/rbac';
   import { applyBookingsRLS, applyReservationsRLS } from '../../utils/rowLevelSecurity';
@@ -139,6 +140,18 @@
             adminEmail={adminEmail}
             adminRole={effectiveRole}
             onNavigateTab={onTabChange}
+          />
+        )}
+
+        {/* Tour Guide Field Command Submodule (Michael Baynosa & Tour Guides) */}
+        {activeTab === 'guide_command' && (
+          <TourGuideCommandCenter
+            bookings={rlsBookings}
+            packages={packages}
+            feedbacks={feedbacks}
+            adminEmail={adminEmail}
+            onUpdateBooking={onUpdateBooking}
+            onUpdateGuide={onUpdateGuide}
           />
         )}
 

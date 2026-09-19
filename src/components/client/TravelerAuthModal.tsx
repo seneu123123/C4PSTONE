@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Mail, 
@@ -56,7 +56,41 @@ export const TravelerAuthModal: React.FC<TravelerAuthModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setFullName('');
+    setOtpToken('');
+    setIsOtpSent(false);
+    setError(null);
+    setSuccessMsg(null);
+    setLoading(false);
+    setGoogleLoading(false);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+      setActiveTab(initialTab === 'signup' ? 'signup' : initialTab === 'guest' ? 'guest' : 'signin');
+    } else {
+      resetForm();
+    }
+  }, [isOpen, initialTab]);
+
   if (!isOpen) return null;
+
+  const handleCloseModal = () => {
+    resetForm();
+    onClose();
+  };
+
+  const switchTab = (tab: 'signin' | 'signup' | 'otp' | 'guest') => {
+    setActiveTab(tab);
+    setPassword('');
+    setOtpToken('');
+    setError(null);
+    setSuccessMsg(null);
+  };
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -94,8 +128,9 @@ export const TravelerAuthModal: React.FC<TravelerAuthModalProps> = ({
         setSuccessMsg('Welcome back! Logging you in...');
         setTimeout(() => {
           onAuthSuccess(profile);
+          resetForm();
           onClose();
-        }, 600);
+        }, 150);
       }
     } catch (err: any) {
       setError(err?.message || 'Invalid email or password. Please check your credentials.');
@@ -133,6 +168,7 @@ export const TravelerAuthModal: React.FC<TravelerAuthModalProps> = ({
         setSuccessMsg('Account created successfully! Welcome to Holiday Travelers.');
         setTimeout(() => {
           onAuthSuccess(profile);
+          resetForm();
           onClose();
         }, 800);
       }
@@ -186,6 +222,7 @@ export const TravelerAuthModal: React.FC<TravelerAuthModalProps> = ({
         setSuccessMsg('Email verified! You are now logged in.');
         setTimeout(() => {
           onAuthSuccess(profile);
+          resetForm();
           onClose();
         }, 600);
       }
@@ -200,13 +237,14 @@ export const TravelerAuthModal: React.FC<TravelerAuthModalProps> = ({
     if (onContinueAsGuest) {
       onContinueAsGuest();
     }
+    resetForm();
     onClose();
   };
 
   return (
     <div 
-      className="fixed inset-0 z-[95] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-xl animate-fade-in"
-      onClick={onClose}
+      className="fixed inset-0 z-[95] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-950/50 backdrop-blur-sm animate-fade-in"
+      onClick={handleCloseModal}
       role="dialog"
       aria-modal="true"
       id="traveler-auth-modal"
@@ -236,7 +274,7 @@ export const TravelerAuthModal: React.FC<TravelerAuthModalProps> = ({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCloseModal}
             className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-sand-muted hover:text-ivory hover:bg-white/10 transition-all cursor-pointer"
             aria-label="Close modal"
           >
@@ -256,7 +294,7 @@ export const TravelerAuthModal: React.FC<TravelerAuthModalProps> = ({
         <div className="grid grid-cols-3 p-1 rounded-xl bg-white/[0.04] border border-white/10 text-xs">
           <button
             type="button"
-            onClick={() => { setActiveTab('signin'); setError(null); }}
+            onClick={() => switchTab('signin')}
             className={`py-2 rounded-lg font-medium transition-all ${
               activeTab === 'signin' || activeTab === 'otp'
                 ? 'bg-sunset-coral text-white shadow-md'
@@ -267,18 +305,18 @@ export const TravelerAuthModal: React.FC<TravelerAuthModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => { setActiveTab('signup'); setError(null); }}
+            onClick={() => switchTab('signup')}
             className={`py-2 rounded-lg font-medium transition-all ${
               activeTab === 'signup'
                 ? 'bg-sunset-coral text-white shadow-md'
                 : 'text-sand-muted hover:text-ivory'
             }`}
           >
-            Register
+            Create Account
           </button>
           <button
             type="button"
-            onClick={() => { setActiveTab('guest'); setError(null); }}
+            onClick={() => switchTab('guest')}
             className={`py-2 rounded-lg font-medium transition-all ${
               activeTab === 'guest'
                 ? 'bg-sunset-coral text-white shadow-md'

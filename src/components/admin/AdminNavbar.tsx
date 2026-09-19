@@ -139,6 +139,22 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               </button>
             )}
 
+            {/* Field Guide Command (Dedicated Submodule for Tour Guides / Michael Baynosa) */}
+            {canAccess('guide_command') && (
+              <button
+                onClick={() => onTabChange('guide_command')}
+                style={activeTab === 'guide_command' ? { backgroundColor: 'var(--admin-accent, #F26A4F)' } : {}}
+                className={`btn-pop flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-sans-body tracking-wider whitespace-nowrap transition-all duration-300 active:scale-95 cursor-pointer ${
+                  activeTab === 'guide_command'
+                    ? 'text-white font-medium shadow-md shadow-black/40'
+                    : 'text-sand-muted hover:text-ivory hover:bg-white/[0.05]'
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5 text-sunset-coral" />
+                <span>Field Guide Command</span>
+              </button>
+            )}
+
             {/* Tour Package Management */}
             {canAccess('packages') && (
               <button

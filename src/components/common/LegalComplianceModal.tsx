@@ -91,7 +91,7 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
 
   const modalNode = (
     <div 
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-xl animate-fade-in cursor-pointer"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-slate-950/50 backdrop-blur-sm animate-fade-in cursor-pointer"
       onClick={onClose}
       role="dialog"
       aria-modal="true"

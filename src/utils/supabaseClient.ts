@@ -13,11 +13,20 @@ export interface UserProfile {
   email: string;
   full_name: string;
   avatar_url?: string | null;
+  phone?: string;
+  emergency_contact?: string;
+  nationality?: string;
+  dietary_preferences?: string;
   role: 'Traveler' | 'Super Admin' | 'Tour Operations Manager' | 'Finance Officer' | 'Tour Guide' | 'Custom Staff';
   status: 'Active' | 'Suspended' | 'Pending';
   auth_provider: string;
   created_at?: string;
   last_login?: string;
+  theme_preferences?: {
+    accentColor?: string;
+    bgTone?: string;
+    cardGlow?: boolean;
+  };
 }
 
 let supabaseInstance: SupabaseClient | null = null;
@@ -198,9 +207,24 @@ export async function signOutUser() {
  * Automatically synchronize user document in Supabase public.users table
  */
 export async function syncUserProfile(user: SupabaseUser, customName?: string): Promise<UserProfile | null> {
-  const email = user.email || '';
+  const email = (user.email || '').toLowerCase().trim();
+  
+  let existingFullName: string | undefined;
+  try {
+    const cached = localStorage.getItem('holiday_traveler_profile');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && parsed.email?.toLowerCase().trim() === email && parsed.full_name) {
+        existingFullName = parsed.full_name;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
   const fullName = 
     customName || 
+    existingFullName ||
     user.user_metadata?.full_name || 
     user.user_metadata?.name || 
     email.split('@')[0] || 
@@ -210,7 +234,7 @@ export async function syncUserProfile(user: SupabaseUser, customName?: string): 
 
   const profilePayload: UserProfile = {
     id: user.id,
-    email: email.toLowerCase(),
+    email: email,
     full_name: fullName,
     avatar_url: avatarUrl,
     auth_provider: provider,
@@ -240,4 +264,55 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   }
 
   return syncUserProfile(user);
+}
+
+/**
+ * Update user profile details in local storage and Supabase DB
+ */
+export async function updateUserProfileInDb(updatedData: Partial<UserProfile> & { email: string }): Promise<UserProfile> {
+  let currentProfile: UserProfile = {
+    id: updatedData.id || 'user_' + Math.random().toString(36).substring(2, 11),
+    email: updatedData.email.toLowerCase().trim(),
+    full_name: updatedData.full_name || 'Traveler',
+    role: 'Traveler',
+    status: 'Active',
+    auth_provider: 'email',
+    last_login: new Date().toISOString()
+  };
+
+  try {
+    const cached = localStorage.getItem('holiday_traveler_profile');
+    if (cached) {
+      currentProfile = { ...currentProfile, ...JSON.parse(cached) };
+    }
+  } catch {}
+
+  const mergedProfile: UserProfile = {
+    ...currentProfile,
+    ...updatedData
+  };
+
+  localStorage.setItem('holiday_traveler_profile', JSON.stringify(mergedProfile));
+
+  try {
+    const supabase = getSupabase();
+    await supabase.from('users').upsert({
+      id: mergedProfile.id,
+      email: mergedProfile.email,
+      full_name: mergedProfile.full_name,
+      avatar_url: mergedProfile.avatar_url,
+      phone: mergedProfile.phone,
+      emergency_contact: mergedProfile.emergency_contact,
+      nationality: mergedProfile.nationality,
+      dietary_preferences: mergedProfile.dietary_preferences,
+      role: mergedProfile.role,
+      status: mergedProfile.status,
+      auth_provider: mergedProfile.auth_provider,
+      last_login: new Date().toISOString()
+    }, { onConflict: 'email' });
+  } catch (err) {
+    console.warn('Supabase DB profile sync notice:', err);
+  }
+
+  return mergedProfile;
 }

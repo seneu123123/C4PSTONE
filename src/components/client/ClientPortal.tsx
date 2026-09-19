@@ -12,6 +12,7 @@ import { ClientDestinations } from './ClientDestinations';
 import { ClientExpeditions } from './ClientExpeditions';
 import { ClientBookingTracker } from './ClientBookingTracker';
 import { CustomerBookingPortal } from '../submodules/CustomerBookingPortal';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { CustomerFeedbackRating } from '../submodules/CustomerFeedbackRating';
 import { X, Calendar, Compass, MessageSquareQuote, ThumbsUp, Star, ShieldCheck } from 'lucide-react';
 
@@ -38,6 +39,7 @@ interface ClientPortalProps {
   promoDiscountPct?: number;
   currentUser?: UserProfile | null;
   onRequireAuth?: () => void;
+  onOpenMyAccount?: () => void;
 }
 
 export const ClientPortal: React.FC<ClientPortalProps> = ({
@@ -62,7 +64,8 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
   promoCode,
   promoDiscountPct,
   currentUser,
-  onRequireAuth
+  onRequireAuth,
+  onOpenMyAccount
 }) => {
   const [showReviewsSection, setShowReviewsSection] = useState(false);
   const [localTrackerRef, setLocalTrackerRef] = useState<string | undefined>(trackerTargetRef);
@@ -210,7 +213,7 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
       {/* ========================================================================= */}
       {isBookingModalOpen && (
         <div 
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-xl animate-fade-in cursor-pointer"
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-950/50 backdrop-blur-sm animate-fade-in cursor-pointer"
           onClick={() => {
             onCloseBookingModal();
             onClearPreSelectedPackage();
@@ -248,28 +251,31 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
             </div>
 
             {/* Booking Wizard Form */}
-            <div className="max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
-              <CustomerBookingPortal
-                packages={activePackages}
-                bookings={bookings}
-                onCreateBooking={onCreateBooking}
-                onGoToTracker={(bookingRef) => {
-                  setLocalTrackerRef(bookingRef);
-                  onCloseBookingModal();
-                  if (onOpenTracker) {
-                    onOpenTracker(bookingRef);
-                  }
-                }}
-                onUpdateBookingStatus={() => {}}
-                isOperatorView={false}
-                preSelectedPackage={preSelectedPackage}
-                onClearPreSelectedPackage={onClearPreSelectedPackage}
-                onOpenLegalPolicy={onOpenLegalPolicy}
-                promoCode={promoCode}
-                promoDiscountPct={promoDiscountPct}
-                currentUser={currentUser}
-                onRequireAuth={onRequireAuth}
-              />
+            <div className="max-h-[80vh] sm:max-h-[82vh] overflow-y-auto pr-1 sm:pr-3 custom-scrollbar pb-32">
+              <ErrorBoundary fallbackTitle="Booking Form Recovery">
+                <CustomerBookingPortal
+                  packages={activePackages}
+                  bookings={bookings}
+                  onCreateBooking={onCreateBooking}
+                  onGoToTracker={(bookingRef) => {
+                    setLocalTrackerRef(bookingRef);
+                    onCloseBookingModal();
+                    if (onOpenTracker) {
+                      onOpenTracker(bookingRef);
+                    }
+                  }}
+                  onUpdateBookingStatus={() => {}}
+                  onUpdateBooking={onUpdateBooking}
+                  isOperatorView={false}
+                  preSelectedPackage={preSelectedPackage}
+                  onClearPreSelectedPackage={onClearPreSelectedPackage}
+                  onOpenLegalPolicy={onOpenLegalPolicy}
+                  promoCode={promoCode}
+                  promoDiscountPct={promoDiscountPct}
+                  currentUser={currentUser}
+                  onRequireAuth={onRequireAuth}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         </div>
@@ -280,7 +286,7 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
       {/* ========================================================================= */}
       {isTrackerOpen && (
         <div 
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-xl animate-fade-in cursor-pointer"
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-950/50 backdrop-blur-sm animate-fade-in cursor-pointer"
           onClick={() => {
             setLocalTrackerRef(undefined);
             onCloseTracker();
@@ -324,6 +330,7 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
                 initialSelectedRef={localTrackerRef || trackerTargetRef}
                 onUpdateBooking={onUpdateBooking}
                 currentUser={currentUser}
+                onOpenMyAccount={onOpenMyAccount}
                 onNavigateToBook={() => {
                   setLocalTrackerRef(undefined);
                   onCloseTracker();

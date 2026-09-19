@@ -298,7 +298,7 @@ export const ClientExpeditions: React.FC<ClientExpeditionsProps> = ({
       <AnimatePresence>
         {modalPackage && (
           <div 
-            className="fixed inset-0 z-[75] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-lg overflow-y-auto cursor-pointer"
+            className="fixed inset-0 z-[75] flex items-center justify-center p-4 sm:p-6 bg-slate-950/50 backdrop-blur-sm overflow-y-auto cursor-pointer"
             onClick={() => setModalPackage(null)}
           >
             <motion.div 

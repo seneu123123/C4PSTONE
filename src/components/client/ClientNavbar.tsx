@@ -13,6 +13,7 @@ interface ClientNavbarProps {
   travelerUser?: UserProfile | null;
   onOpenTravelerAuth?: () => void;
   onSignOutTraveler?: () => void;
+  onOpenMyAccount?: () => void;
 }
 
 export const ClientNavbar: React.FC<ClientNavbarProps> = ({
@@ -25,6 +26,7 @@ export const ClientNavbar: React.FC<ClientNavbarProps> = ({
   travelerUser,
   onOpenTravelerAuth,
   onSignOutTraveler,
+  onOpenMyAccount,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -228,11 +230,23 @@ export const ClientNavbar: React.FC<ClientNavbarProps> = ({
                     type="button"
                     onClick={() => {
                       setUserDropdownOpen(false);
+                      if (onOpenMyAccount) onOpenMyAccount();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs text-ivory hover:bg-white/5 transition-colors flex items-center gap-2 font-medium"
+                  >
+                    <User className="w-3.5 h-3.5 text-sunset-coral" />
+                    <span>My Account & Balances</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserDropdownOpen(false);
                       onOpenTracker();
                     }}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs text-sand-muted hover:text-ivory hover:bg-white/5 transition-colors flex items-center gap-2"
                   >
-                    <Ticket className="w-3.5 h-3.5 text-sunset-coral" />
+                    <Ticket className="w-3.5 h-3.5 text-cyan-400" />
                     <span>My Bookings & Vouchers</span>
                   </button>
 

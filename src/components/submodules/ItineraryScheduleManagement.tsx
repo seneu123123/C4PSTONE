@@ -204,6 +204,29 @@ export const ItineraryScheduleManagement: React.FC<ItineraryScheduleManagementPr
                       <div className="pt-2 border-t border-white/[0.04]">
                         {editingGuideBookingId === b.id ? (
                           <div className="space-y-2">
+                            <div className="flex flex-wrap gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setGuideInput('Michael Baynosa (+63 920 456 7890) [Confirmed Field Leader]')}
+                                className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded hover:bg-emerald-500/20 cursor-pointer"
+                              >
+                                + Michael Baynosa
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setGuideInput('Capt. Roger Mendoza (+63 920 111 8899) [Confirmed]')}
+                                className="text-[10px] bg-white/[0.05] border border-white/10 text-sand-muted px-2 py-0.5 rounded hover:text-ivory cursor-pointer"
+                              >
+                                + Roger Mendoza
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setGuideInput('Danica Reyes (+63 917 334 1122) [Confirmed]')}
+                                className="text-[10px] bg-white/[0.05] border border-white/10 text-sand-muted px-2 py-0.5 rounded hover:text-ivory cursor-pointer"
+                              >
+                                + Danica Reyes
+                              </button>
+                            </div>
                             <input
                               type="text"
                               placeholder="Enter Tour Guide Name..."

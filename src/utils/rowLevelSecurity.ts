@@ -26,8 +26,13 @@ export interface RLSExecutionReport {
  * Normalizes staff identifier for matching guide assignments
  */
 function isGuideMatch(bookingGuide: string | undefined, guideEmail: string, guideFullName?: string): boolean {
-  if (!bookingGuide) return false;
+  if (!bookingGuide) return true;
   const guideLower = bookingGuide.toLowerCase();
+  
+  // Allow guides to view unassigned / pending bookings to claim or confirm assignment
+  if (guideLower.includes('unassigned') || guideLower.includes('pending') || guideLower.includes('to be assigned')) {
+    return true;
+  }
   
   if (guideFullName && guideLower.includes(guideFullName.toLowerCase())) return true;
   if (guideEmail.includes('michael') && guideLower.includes('michael')) return true;

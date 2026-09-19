@@ -406,6 +406,86 @@ export const BookingDetailDrawer: React.FC<BookingDetailDrawerProps> = ({
                 </div>
               </div>
 
+              {/* Field Tour Guide Allocation & Confirmation Control */}
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-sunset-coral" />
+                    <h4 className="text-sm font-semibold text-ivory">Assigned Field Tour Guide</h4>
+                  </div>
+                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1 ${
+                    (booking.assignedGuide || '').includes('Confirmed') || (booking.assignedGuide || '').includes('DOT')
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  }`}>
+                    {(booking.assignedGuide || '').includes('Confirmed') ? (
+                      <>
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Confirmed Guide</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-3 h-3" />
+                        <span>Awaiting Confirmation / Assignment</span>
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#070B0E] p-3 rounded-xl border border-white/5">
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-medium text-ivory">
+                      {booking.assignedGuide || 'Unassigned (Pending Allocation)'}
+                    </div>
+                    <div className="text-[11px] text-sand-muted">
+                      Official License: DOT Accredited Expedition Leader
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                    {/* Quick Guide Selector */}
+                    <select
+                      value={booking.assignedGuide || ''}
+                      onChange={(e) => {
+                        if (onUpdateBooking) {
+                          onUpdateBooking({
+                            ...booking,
+                            assignedGuide: e.target.value
+                          });
+                        }
+                      }}
+                      className="bg-[#0B1017] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-sand-light focus:outline-none focus:border-sunset-coral cursor-pointer"
+                    >
+                      <option value="Michael Baynosa (+63 920 456 7890) [Confirmed Field Leader]">Michael Baynosa (+63 920 456 7890) [Michael Baynosa]</option>
+                      <option value="Michael Baynosa (+63 920 456 7890) [Pending Confirmation]">Michael Baynosa (+63 920 456 7890) [Pending]</option>
+                      <option value="Capt. Roger Mendoza (+63 920 111 8899) [Confirmed]">Capt. Roger Mendoza (+63 920 111 8899)</option>
+                      <option value="Danica Reyes (+63 917 334 1122) [Confirmed]">Danica Reyes (+63 917 334 1122)</option>
+                      <option value="Unassigned (Pending Super Admin Assignment)">Unassigned (Pending Admin Allocation)</option>
+                    </select>
+
+                    {/* 1-Click Accept / Confirm Button */}
+                    {!(booking.assignedGuide || '').includes('Confirmed') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onUpdateBooking) {
+                            onUpdateBooking({
+                              ...booking,
+                              assignedGuide: 'Michael Baynosa (+63 920 456 7890) [Confirmed Field Leader]'
+                            });
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium flex items-center gap-1.5 shrink-0 shadow-sm transition-all cursor-pointer"
+                        title="Confirm & Accept Assignment as Michael Baynosa"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Confirm as Michael Baynosa</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Financial & Invoice Overview */}
               <div className="p-5 rounded-2xl bg-[#070B0E] border border-white/10 space-y-3 relative overflow-hidden">
                 {/* Physical Official Rubber Stamp */}

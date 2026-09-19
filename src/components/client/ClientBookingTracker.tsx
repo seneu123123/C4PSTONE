@@ -47,6 +47,7 @@ interface ClientBookingTrackerProps {
   onUpdateBooking?: (booking: Booking) => void;
   initialSelectedRef?: string;
   currentUser?: UserProfile | null;
+  onOpenMyAccount?: () => void;
 }
 
 export const ClientBookingTracker: React.FC<ClientBookingTrackerProps> = ({
@@ -54,7 +55,8 @@ export const ClientBookingTracker: React.FC<ClientBookingTrackerProps> = ({
   onNavigateToBook,
   onUpdateBooking,
   initialSelectedRef,
-  currentUser
+  currentUser,
+  onOpenMyAccount
 }) => {
   const safeInitialRef = typeof initialSelectedRef === 'string' && initialSelectedRef.trim() ? initialSelectedRef.trim() : undefined;
   const [searchQuery, setSearchQuery] = useState('');
@@ -306,8 +308,60 @@ Phone: 0916 525 3517 | Email: holidaytravelersinc2022@gmail.com`;
 
   const latestRef = myBookingRefs.length > 0 ? myBookingRefs[0] : null;
 
+  const totalOutstandingBalance = visibleBookings.reduce((sum, b) => sum + (b.invoice?.balanceDue || 0), 0);
+  const activeUnpaidBookings = visibleBookings.filter((b) => (b.invoice?.balanceDue || 0) > 0);
+
   return (
     <div className="space-y-8 text-left">
+      {/* Outstanding Balance Global Alert Banner */}
+      {totalOutstandingBalance > 0 && (
+        <div className="p-5 rounded-3xl bg-gradient-to-r from-rose-950/70 via-sunset-coral/20 to-amber-950/50 border-2 border-sunset-coral/50 shadow-2xl space-y-3 animate-pulse-subtle">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-sunset-coral/20 border border-sunset-coral/60 flex items-center justify-center text-sunset-coral shrink-0">
+                <AlertCircle className="w-5 h-5 animate-bounce" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-sunset-coral font-bold block">
+                  Active Outstanding Balance Notice
+                </span>
+                <h3 className="text-lg sm:text-xl font-serif-display text-ivory">
+                  ₱{totalOutstandingBalance.toLocaleString()} Remaining Unpaid
+                </h3>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {onOpenMyAccount && (
+                <button
+                  type="button"
+                  onClick={onOpenMyAccount}
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-ivory font-semibold text-xs border border-white/20 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <User className="w-3.5 h-3.5 text-sunset-coral" />
+                  <span>My Account</span>
+                </button>
+              )}
+
+              {activeUnpaidBookings.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedBooking(activeUnpaidBookings[0])}
+                  className="px-4 py-2 rounded-xl bg-sunset-coral hover:bg-[#ff765b] text-white font-semibold text-xs shadow-lg shadow-sunset-coral/30 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>Settle Balance Now</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-sand-muted font-sans-body">
+            You have <strong className="text-sunset-coral">{activeUnpaidBookings.length} active reservation(s)</strong> with a pending balance. Please upload your payment receipt or transfer proof before your scheduled departure.
+          </p>
+        </div>
+      )}
+
       {/* Search & Device Status Header */}
       <div className="bg-[#0B1015] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
         <div className="max-w-3xl space-y-3">
@@ -894,7 +948,7 @@ Phone: 0916 525 3517 | Email: holidaytravelersinc2022@gmail.com`;
       {/* Re-upload Receipt Modal */}
       {isReuploadModalOpen && selectedBooking && (
         <div 
-          className="fixed inset-0 z-[90] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200 cursor-pointer"
+          className="fixed inset-0 z-[90] bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200 cursor-pointer"
           onClick={() => setIsReuploadModalOpen(false)}
         >
           <div 
